@@ -12,14 +12,32 @@ class chessEnv:
         self.board.reset()
         return self.board
     
-    def make_move(self, board: chess.Board):
-        board.push(move=chess.Move())
+    def make_move(self, move: chess.Move) -> Union[chess.Board, bool]:
+        self.board.push(move=move)
+        if(self.board.status() == chess.Status.VALID):
+            return self.board, True
+        self.board.pop()
+        return self.board, False
+
     
 
 
+def encode_move(move: chess.Move) -> numpy.ndarray:
+    uci_str = move.uci()
+    letters_arr = ['a','b','c','d','e','f','g','h']
+    from_uci_str = chess.square_name(move.from_square())
+    from_uci_row = letters_arr.index(from_uci_str[0])
+    from_uci_col = int(from_uci_str[1])
+    
+    to_uci_str = chess.square_name(move.to_square())
+    promotion_uci_str = chess.piece_name(move.promotion) if move.promotion is not None else None
+    arr = numpy.zeros(shape=[8, 8, 73])
+    
+
+    return
+
 def get_bitboard(board: chess.Board) -> numpy.ndarray:
     def map_symbol(s: str) -> int:
-        # n = 0
         if s.upper()=='P':
             n=0
         elif s.upper()=='N':
