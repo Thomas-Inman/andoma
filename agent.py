@@ -3,14 +3,16 @@ import random
 import chess
 
 
+
 class QLearning:
   def __init__(self, env, alpha, gamma=0, epsilon=0.05, temp=0, nb_layers=2, decay=False):
     # Init vals
     self.env = env
     self.alpha = alpha
     self.gamma = gamma
-    self.QM = QMatrix(nb_layers,10,1,self.env.observation_space,self.env.action_space,self.env)
-    self.Q = self.QM.Q
+    # self.QM = QMatrix(nb_layers,10,1,self.env.observation_space,self.env.action_space,self.env)
+    self.QM = None
+    self.Q = None # TODO
     self.epsilon = epsilon
     self.nep = 1
     self.decay = decay
