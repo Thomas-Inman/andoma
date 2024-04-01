@@ -44,14 +44,14 @@ def encode_move(move: chess.Move) -> numpy.ndarray:
         up = to_uci_row>from_uci_row
         nu = to_uci_row==from_uci_row
         # {N, N E, E, SE, S, SW, W, N W }
-        dir = 0 if (up and not nu and nr) \
+        dir = 2 if (up and not nu and nr) \
             else 1 if (up and not nu and right and not nr) \
-            else 2 if (nu and right and not nr) \
-            else 3 if (not up and not nu and right and not nr) \
-            else 4 if (not up and not nu and nr) \
+            else 0 if (nu and right and not nr) \
+            else 7 if (not up and not nu and right and not nr) \
+            else 6 if (not up and not nu and nr) \
             else 5 if (not up and not nu and not right and not nr) \
-            else 6 if (nu and not right and not nr) \
-            else 7
+            else 4 if (nu and not right and not nr) \
+            else 3
         idx = (distance + 7*dir)-1
     elif promotion_uci_str is None: #knight move
         mp = [(2, 1), (2, -1), (-2, 1),(-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
@@ -63,16 +63,14 @@ def encode_move(move: chess.Move) -> numpy.ndarray:
         pass
     else: # promotion
         idx=64
-        right_distance = to_uci_col - from_uci_col
-        mult = 0 if right_distance<0 else 1 if right_distance==0 else 2
+        right_distance =  from_uci_row - to_uci_row
+        mult = 0 if right_distance<0 else 1 if right_distance>0 else 2
         add = 1 if promotion_uci_str=="rook" else 2 if promotion_uci_str=="knight" else 3 if promotion_uci_str=="bishop" else 4
         idx = idx + ((add + 4*mult)-1)
         pass
     
     arr = numpy.zeros(shape=[8, 8, 76])
-    arr[from_uci_col][from_uci_row][idx] = 1
-    
-
+    arr[from_uci_row][from_uci_col][idx] = 1
     return arr
 
 def decode_move(array: numpy.ndarray) -> chess.Move:
@@ -112,7 +110,7 @@ def decode_move(array: numpy.ndarray) -> chess.Move:
     else:
         #promo
         nb = idx-64
-        mult = math.floor(nb/4)
+        mult = math.floor(nb/4) - 1
         add = nb % 4
         to_row = 8
         to_col = from_col-1 if mult==0 else from_col if mult==1 else from_col+1
