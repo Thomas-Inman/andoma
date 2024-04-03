@@ -3,6 +3,7 @@ import random
 import chess
 import conv
 import chessenv
+import tensorflow.keras.optimizers as optimizers
 
 
 
@@ -21,6 +22,11 @@ class DeepQLearning:
         self.env = env
         self.memorySize = memorySize
         self.batchSize = 32
+        self.model.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
+        self.model.summary()
+        self.targetModel.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
+        self.targetModel.summary()
+        
 
     def remember(self, state, action, reward, nextState, done):
         self.memory.append((state, action, reward, nextState, done))
@@ -67,6 +73,8 @@ class DeepQLearning:
 
     def train(self, episodes):
         for episode in range(episodes):
+            if episode % 10 == 0:
+                print("Episode: ", episode)
             state = self.env.reset()
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
@@ -80,8 +88,9 @@ class DeepQLearning:
                 state = nextState
             self.replay()
             if episode % 10 == 0:
+                print("Finished episode: ", episode)
                 self.targetModel.set_weights(self.model.get_weights())
-                print("Episode: ", episode)
+                
         self.model.save("model.h5")
         self.targetModel.save("targetModel.h5")
 
