@@ -10,9 +10,10 @@ import tensorflow.keras.optimizers as optimizers
 class DeepQLearning:
     def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
         # Init vals
-        self.convNet = conv.convNet(inputShape)
-        self.model = self.convNet.buildConvNet(32, 2)
-        self.targetModel = self.convNet.buildConvNet(32, 2)
+        self.convNet = conv.convNet(inputShape, 32, 2)
+        self.model = self.convNet.model
+        self.targetNet = conv.convNet(inputShape, 32, 2)
+        self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
         self.gamma = gamma
@@ -49,7 +50,7 @@ class DeepQLearning:
         actValues = self.model.predict(state)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues)]
-        arr = numpy.zeros(shape=[8, 8, 76])
+        arr = numpy.zeros(shape=[76, 8, 8])
         arr[mx[0]][mx[1]][mx[2]] = 1
         # print(arr)
         return arr

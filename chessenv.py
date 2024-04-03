@@ -71,15 +71,15 @@ class chessEnv:
             pass
         
         if(index_only):
-            return None, (from_uci_row, from_uci_col, idx)
-        arr = numpy.zeros(shape=[8, 8, 76])
-        arr[from_uci_row][from_uci_col][idx] = 1
-        return arr, (from_uci_row, from_uci_col, idx)
+            return None, (idx, from_uci_row, from_uci_col)
+        arr = numpy.zeros(shape=[76, 8, 8])
+        arr[idx][from_uci_row][from_uci_col] = 1
+        return arr, (idx, from_uci_row, from_uci_col)
 
     def decode_move(self, array: numpy.ndarray, white_to_move: bool) -> chess.Move:
-        from_col = numpy.where(array != 0)[0][0] + 1
-        from_row = numpy.where(array != 0)[1][0] + 1
-        idx = numpy.where(array != 0)[2][0]
+        from_col = numpy.where(array != 0)[1][0] + 1
+        from_row = numpy.where(array != 0)[2][0] + 1
+        idx = numpy.where(array != 0)[0][0]
         to_row = 0
         to_col = 0
         promo = None
