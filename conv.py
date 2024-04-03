@@ -6,7 +6,7 @@ import tensorflow.keras.optimizers as optimizers
 import tensorflow.keras.callbacks as callbacks
 
 class convNet:
-    def __init__(self, inputShape, convSize, convDepth):
+    def __init__(self, inputShape, convSize, convDepth, loss='mean_squared_error'):
         #@Param inputShape : the shape of thew observation -> transformed board state
         #@param convSize : the size of the filter (will be the outputy size)
         #@param convDepth : Number of Convolution layers in the model
@@ -27,7 +27,7 @@ class convNet:
         x = layers.Dense(convSize * boardSize, 'relu')(x) # An array of size convSize * boardSize
         
         self.model = models.Model(inputs=board_3d, outputs=x)
-        self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
+        self.model.compile(optimizer = optimizers.Adam(5e-4), loss=loss)
     
     def fit(self, train_x, train_y, epochs=100):
         assert train_x.shape[0] == train_y.shape[0]
@@ -35,17 +35,19 @@ class convNet:
         
     def forward(self, board):
         #@param board : same dims as inputShape -> representatio of board state
-        print(board.shape)
         return self.model.predict(board)
     
 
-net = convNet((8, 8, 14), 76, 3)
-print(net.model.summary())
+if __name__ == '__main__':
+    net = convNet((8, 8, 14), 76, 3)
+    print(net.model.summary())
 
-train_x = np.random.uniform(0, 1, size=(100, 8, 8, 14))
-train_y = np.random.uniform(0, 1, size=(100, 76*8*8))
-print("x: " + str(train_x.shape))
-print("Y: " + str(train_y.shape))
-net.fit(train_x, train_y, epochs=5)
-print(net.forward(np.random.uniform(1, 2, size=(8, 8, 14))))
+    train_x = np.random.uniform(0, 1, size=(100, 8, 8, 14))
+    train_y = np.random.uniform(0, 1, size=(100, 76*8*8))
+    
+    print("x: " + str(train_x.shape))
+    print("Y: " + str(train_y.shape))
+    net.fit(train_x, train_y, epochs=5)
+    
+    print(net.forward(np.random.uniform(1, 2, size=(1, 8, 8, 14))))
 
