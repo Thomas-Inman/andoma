@@ -2,53 +2,91 @@ import numpy
 import random
 import chess
 import conv
+import chessenv
+
 
 
 class DeepQLearning:
-  def __init__(self, env, alpha, gamma=0, epsilon=0.05, temp=0, nb_layers=2, decay=False):
-    # Init vals
-    self.env = env
-    self.alpha = alpha
-    self.gamma = gamma
-    # self.QM = QMatrix(nb_layers,10,1,self.env.observation_space,self.env.action_space,self.env)
-    self.convNet = conv.convNet((12,8,8))
-    self.QM = None
-    self.Q = None # TODO
-    self.epsilon = epsilon
-    self.nep = 1
-    self.decay = decay
-  def select_action(self, s, greedy=False):
-    s = self.QM.get_states(s)
-    if greedy:
-      # if finished training, then choose the optimal policy
-      try:
-        # print(list(numpy.argmax(self.QM.Q[tuple([index])+tuple(x)]) for index, x in enumerate(s)))
-        ls_r = numpy.bincount(list(numpy.argmax(self.QM.Q[tuple([index])+tuple(x)]) for index, x in enumerate(s)))
-        winner = numpy.argwhere(ls_r == numpy.amax(ls_r)).flatten().tolist()
-        r = numpy.random.choice(winner)
-        # print(r)
-      except Exception as e:
-        print(s)
-        raise e
-      return r
-    else:
-      eps_decayed = max(0, self.epsilon-self.nep*0.001) if self.decay else self.epsilon# decay rate
-      try:
-        ls_r = numpy.bincount(list(numpy.argmax(self.QM.Q[tuple([index])+tuple(x)]) for index, x in enumerate(s)))
-        winner = numpy.argwhere(ls_r == numpy.amax(ls_r)).flatten().tolist()
-        r = numpy.random.choice(winner)
-      except Exception as e:
-        print(s)
-        raise e
-      return numpy.random.choice([numpy.random.choice([random.randint(0,self.env.action_space.n-1)]),r], p=[eps_decayed,1-eps_decayed])#numpy.argmax(softmax(self.Q[s], self.temp))
+    def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
+        # Init vals
+        self.convNet = conv.convNet(inputShape)
+        self.model = self.convNet.buildConvNet(32, 2)
+        self.targetModel = self.convNet.buildConvNet(32, 2)
+        self.targetModel.set_weights(self.model.get_weights())
+        self.memory = []
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilonMin = epsilonMin
+        self.epsilonDecay = epsilonDecay
+        self.env = env
+        self.memorySize = memorySize
+        self.batchSize = 32
 
-  def update(self, s, a, r, s_prime, a_prime, done=False):
-    # Select the best action
-    if done:
-      return
-    s2 = self.QM.get_states(s)
-    s2_prime = self.QM.get_states(s_prime)
-    self.nep = self.nep+1
-    for i1,ls in enumerate(s2):
-      for i2,ls2 in enumerate(s2_prime):
-        self.QM.Q[tuple([i1])+tuple(ls)][a] = self.QM.Q[tuple([i1])+tuple(ls)][a] + self.alpha*(r + (self.gamma*numpy.max(self.QM.Q[tuple([i2])+tuple(ls2)])) - self.QM.Q[tuple([i1])+tuple(ls)][a])
+    def remember(self, state, action, reward, nextState, done):
+        self.memory.append((state, action, reward, nextState, done))
+        if len(self.memory) > self.memorySize:
+            self.memory.pop(0)
+
+    def act(self, state):
+        if numpy.random.rand() <= self.epsilon:
+            #get legal moves
+            legalMoves = self.env.get_board().legal_moves
+            legalMoves = list(legalMoves)
+            random_move_array = env.encode_move(random.choice(legalMoves), False)[0]
+            # print(random_move_array)
+            return random_move_array
+        
+        # filter legal moves
+        legalMoves = self.env.get_board().legal_moves
+        legalMoves = list(legalMoves)
+        legalMoves = [env.encode_move(move, True)[1] for move in legalMoves]
+        actValues = self.model.predict(state)[0]
+        actValues = [actValues[move] for move in legalMoves]
+        mx = legalMoves[numpy.argmax(actValues)]
+        arr = numpy.zeros(shape=[8, 8, 76])
+        arr[mx[0]][mx[1]][mx[2]] = 1
+        # print(arr)
+        return arr
+    
+    
+    def replay(self):
+        if len(self.memory) < self.batchSize:
+            return
+        samples = random.sample(self.memory, self.batchSize)
+        for sample in samples:
+            state, action, reward, nextState, done = sample
+            target = self.model.predict(state)
+            if done:
+                target[0][action] = reward
+            else:
+                Q_future = max(self.targetModel.predict(nextState)[0])
+                target[0][action] = reward + Q_future * self.gamma
+            self.model.fit(state, target, epochs=1, verbose=0)
+        if self.epsilon > self.epsilonMin:
+            self.epsilon *= self.epsilonDecay
+
+    def train(self, episodes):
+        for episode in range(episodes):
+            state = self.env.reset()
+            state = numpy.reshape(state, [1, 12, 8, 8])
+            done = False
+            while not done:
+                action = self.act(state)
+                # print(action)
+                # print("!!!!!!!!!")
+                nextState, reward, done, _ = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
+                nextState = numpy.reshape(nextState, [1, 12, 8, 8])
+                self.remember(state, action, reward, nextState, done)
+                state = nextState
+            self.replay()
+            if episode % 10 == 0:
+                self.targetModel.set_weights(self.model.get_weights())
+                print("Episode: ", episode)
+        self.model.save("model.h5")
+        self.targetModel.save("targetModel.h5")
+
+if __name__ == '__main__':
+    env = chessenv.chessEnv(chess.Board())
+    dql = DeepQLearning(env, (12, 8, 8), 2000, 0.95, 1.0, 0.995, 0.95)
+    dql.train(1000)
+    

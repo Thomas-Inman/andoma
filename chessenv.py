@@ -9,19 +9,20 @@ class chessEnv:
     def __init__(self, board: chess.Board) -> None:
         self.board = board
     
-    def reset_env(self) -> Union[chess.Board, numpy.ndarray]:
+    def reset(self) -> Union[chess.Board, numpy.ndarray]:
         self.board.reset()
-        return self.board
+        return self.get_bitboard(self.board)
     
-    def make_move(self, move: chess.Move) -> Union[chess.Board, bool]:
+    def step(self, move: chess.Move) -> Union[chess.Board, bool]:
         self.board.push(move=move)
-        if(self.board.status() == chess.Status.VALID):
-            return self.board, True
         self.board.pop()
-        return self.board, False
+        return self.get_bitboard(self.board), evaluate.move_value(self.board, move, False ), (self.board.is_checkmate() or self.board.is_stalemate()) , self.board.status() == chess.Status.VALID
+    
+    def get_board(self) -> chess.Board:
+        return self.board
 
 
-    def encode_move(self, move: chess.Move) -> numpy.ndarray:
+    def encode_move(self, move: chess.Move, index_only:bool) -> numpy.ndarray:
     #     We represent the policy π(a|s) by a 8 × 8 × 73
     # stack of planes encoding a probability distribution over 4,672 possible moves. Each of the 8 × 8
     # positions identifies the square from which to “pick up” a piece. The first 56 planes encode
@@ -69,9 +70,11 @@ class chessEnv:
             idx = idx + ((add + 4*mult)-1)
             pass
         
+        if(index_only):
+            return None, (from_uci_row, from_uci_col, idx)
         arr = numpy.zeros(shape=[8, 8, 76])
         arr[from_uci_row][from_uci_col][idx] = 1
-        return arr
+        return arr, (from_uci_row, from_uci_col, idx)
 
     def decode_move(self, array: numpy.ndarray, white_to_move: bool) -> chess.Move:
         from_col = numpy.where(array != 0)[0][0] + 1
@@ -154,9 +157,9 @@ class chessEnv:
                 if(bitboard.get(n + 8*m) is not None):
                     b_arr[map_symbol(bitboard[n + 8*m].symbol())][m][n] = 1
 
-        print(b_arr)
+        # print(b_arr)
         
-        return bitboard
+        return b_arr
 
 if __name__ == '__main__':
     board = chess.Board()
