@@ -68,8 +68,19 @@ class DeepQLearning:
                 # print(action)
                 target[0][action] = reward
             else:
-                print(self.targetModel.predict(nextState)[0])
-                Q_future = max(self.targetModel.predict(nextState)[0])
+                # filter legal moves
+                legalMoves = self.env.get_board().legal_moves
+                legalMoves = list(legalMoves)
+                legalMoves = [env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
+                Q_future = self.targetModel.predict(nextState)[0]
+                Q_future = [Q_future[move] for move in legalMoves]
+                try:
+                    Q_future = numpy.max(Q_future)
+                except:
+                    Q_future = 0
+
+
+                # Q_future = max(self.targetModel.predict(nextState)[0])
                 target[0][action] = reward + Q_future * self.gamma
             self.model.fit(state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilonMin:
