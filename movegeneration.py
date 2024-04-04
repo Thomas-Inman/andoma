@@ -23,9 +23,9 @@ def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
 
     move = minimax_root(depth, board)
 
-    debug_info["time"] = time.time() - t0
-    if debug == True:
-        print(f"info {debug_info}")
+    # debug_info["time"] = time.time() - t0
+    # if debug == True:
+    #     print(f"info {debug_info}")
     return move
 
 
@@ -44,7 +44,6 @@ def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
         board.legal_moves, key=orderer, reverse=(board.turn == chess.WHITE)
     )
     return list(in_order)
-
 
 def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
     """
@@ -69,6 +68,7 @@ def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
             value = 0.0
         else:
             value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
+            print(value)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -78,7 +78,6 @@ def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
             best_move_found = move
 
     return best_move_found
-
 
 def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess.Move:
     """
@@ -103,6 +102,7 @@ def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess
             value = 0.0
         else:
             value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
+            print(value)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -112,6 +112,7 @@ def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess
             best_move_found = move
 
     return best_move_found, best_move
+
 
 
 def minimax(
@@ -137,36 +138,16 @@ def minimax(
         return 0
 
     if depth == 0:
-        return evaluate_board(board)
+        return evaluate_board(board) if agent is None else agent.evaluate_board(board)
 
     if is_maximising_player:
         best_move = -float("inf")
         moves = get_ordered_moves(board)
-        state = agent.env.get_bitboard(board)
-        state = numpy.reshape(state, [1, 12, 8, 8])
-        arr, _ = act(agent, state, agent.env)
-        move = agent.env.decode_move(arr, board.turn)
-        board.push(move)
-        if board.status() != chess.Status.VALID:
-            board.pop()
-            for move in moves:
-                board.push(move)
-                curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
-                if curr_move > MATE_THRESHOLD:
-                    curr_move -= 1
-                elif curr_move < -MATE_THRESHOLD:
-                    curr_move += 1
-                best_move = max(
-                    best_move,
-                    curr_move,
-                )
-                board.pop()
-                alpha = max(beta, best_move)
-                if beta <= alpha:
-                    return best_move
-            return best_move
-        else:
+        for move in moves:
+            board.push(move)
             curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
+            # Each ply after a checkmate is slower, so they get ranked slightly less
+            # We want the fastest mate!
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:
@@ -176,43 +157,15 @@ def minimax(
                 curr_move,
             )
             board.pop()
-            alpha = max(beta, best_move)
+            alpha = max(alpha, best_move)
             if beta <= alpha:
                 return best_move
-
         return best_move
-        
     else:
         best_move = float("inf")
         moves = get_ordered_moves(board)
-        state = agent.env.get_bitboard(board)
-        state = numpy.reshape(state, [1, 12, 8, 8])
-        arr, _ = act(agent, state, agent.env)
-        move = agent.env.decode_move(arr, board.turn)
-        board.push(move)
-
-
-        if board.status() != chess.Status.VALID:
-            board.pop()
-            for move in moves:
-                board.push(move)
-                curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
-                # Each ply after a checkmate is slower, so they get ranked slightly less
-                # We want the fastest mate!
-                if curr_move > MATE_THRESHOLD:
-                    curr_move -= 1
-                elif curr_move < -MATE_THRESHOLD:
-                    curr_move += 1
-                best_move = min(
-                    best_move,
-                    curr_move,
-                )
-                board.pop()
-                beta = min(alpha, best_move)
-                if beta <= alpha:
-                    return best_move
-            return best_move
-        else:
+        for move in moves:
+            board.push(move)
             curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
@@ -223,30 +176,11 @@ def minimax(
                 curr_move,
             )
             board.pop()
-            beta = min(alpha, best_move)
+            beta = min(beta, best_move)
             if beta <= alpha:
                 return best_move
+        return best_move
 
-
-
-
-        
-        # for move in moves:
-        #     board.push(move)
-        #     curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
-        #     if curr_move > MATE_THRESHOLD:
-        #         curr_move -= 1
-        #     elif curr_move < -MATE_THRESHOLD:
-        #         curr_move += 1
-        #     best_move = min(
-        #         best_move,
-        #         curr_move,
-        #     )
-        #     board.pop()
-        #     beta = min(beta, best_move)
-        #     if beta <= alpha:
-        #         return best_move
-        # return best_move
 
 def act(agent, state, env):
         if numpy.random.rand() <= agent.epsilon:

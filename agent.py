@@ -15,9 +15,9 @@ class DeepQLearning:
     def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
         # Init vals
         
-        self.convNet = conv.convNet(inputShape, 16, 2)
+        self.convNet = conv.convNet(inputShape, 8, 3)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 16, 2)
+        self.targetNet = conv.convNet(inputShape, 8, 3)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
@@ -39,14 +39,19 @@ class DeepQLearning:
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
+    def random_move(self, _random = False):
+        if _random:
+            legalMoves = self.env.get_board().legal_moves
+            legalMoves = list(legalMoves)
+        else:
+            legalMoves = [movegeneration.next_move(2, self.env.get_board())]
+        random_move_array, idx = self.env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
+        return random_move_array, idx
+
     def act(self, state):
         if numpy.random.rand() <= self.epsilon:
             #get legal moves
-            legalMoves = self.env.board.legal_moves
-            legalMoves = list(legalMoves)
-            random_move_array, idx = env.encode_move(random.choice(legalMoves), False, self.env.board.turn)
-            # print(random_move_array)
-            return random_move_array, idx
+            return self.random_move(True)
         
         # filter legal moves
         legalMoves = self.env.board.legal_moves
@@ -86,6 +91,10 @@ class DeepQLearning:
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
 
+    def evaluate_board(self, board):
+        state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
+        return self.model.predict(state, verbose=0)[0][0]
+
     def train(self, episodes):
         for episode in range(episodes):
             if episode % 10 == 0:
@@ -101,7 +110,7 @@ class DeepQLearning:
                 # nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.board.turn))
                 print(self.env.board)
                 # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
-                nextMove, reward = movegeneration.minimax_root_with_value(3, self.env.board, self)
+                nextMove, reward = movegeneration.minimax_root_with_value(2, self.env.board, self)
                 self.env.board.push(nextMove)
                 done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
                 valid = self.env.board.status() == chess.Status.VALID
