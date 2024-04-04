@@ -14,16 +14,18 @@ class chessEnv:
         return self.get_bitboard(self.board)
     
     def step(self, move: chess.Move) -> Union[chess.Board, bool]:
+        eval = evaluate.move_value(self.board, move, False)
         self.board.push(move=move)
-        self.board.pop()
-        return self.get_bitboard(self.board), evaluate.move_value(self.board, move, False ), (self.board.is_checkmate() or self.board.is_stalemate() or self.board.status()!=chess.Status.VALID) , self.board.status() == chess.Status.VALID
+        print(self.board)
+        # self.board.pop()
+        return self.get_bitboard(self.board), eval, (self.board.is_checkmate() or self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.is_fivefold_repetition() or self.board.status()!=chess.Status.VALID) , self.board.status() == chess.Status.VALID
     
     def get_board(self) -> chess.Board:
         return self.board
 
 
-    def encode_move(self, move: chess.Move, index_only:bool) -> numpy.ndarray:
-    #     We represent the policy π(a|s) by a 8 × 8 × 73
+    def encode_move(self, move: chess.Move, index_only:bool, white_to_move: bool) -> numpy.ndarray:
+    #     We represent the policy π(a|s) by a 8 × 8 × 76
     # stack of planes encoding a probability distribution over 4,672 possible moves. Each of the 8 × 8
     # positions identifies the square from which to “pick up” a piece. The first 56 planes encode
     # possible ‘queen moves’ for any piece: a number of squares [1..7] in which the piece will be
@@ -35,6 +37,13 @@ class chessEnv:
         to_uci_str = chess.square_name(move.to_square)
         to_uci_row = letters_arr.index(to_uci_str[0])
         to_uci_col = int(to_uci_str[1])-1
+
+        # if white_to_move:
+        #     from_uci_col = 7-from_uci_col
+        #     from_uci_row = 7-from_uci_row
+        #     to_uci_col = 7-to_uci_col
+        #     to_uci_row = 7-to_uci_row
+
         queen_move = (abs(from_uci_col-to_uci_col)==abs(from_uci_row-to_uci_row)) or ((from_uci_col==to_uci_col) or (from_uci_row==to_uci_row))
         idx = 0
         promotion_uci_str = chess.piece_name(move.promotion) if move.promotion is not None else None
@@ -70,6 +79,7 @@ class chessEnv:
             idx = idx + ((add + 4*mult)-1)
             pass
         
+
         if(index_only):
             return None, (idx, from_uci_row, from_uci_col)
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -83,6 +93,12 @@ class chessEnv:
         to_row = 0
         to_col = 0
         promo = None
+        
+        # if not white_to_move:
+        #     from_col = 7-from_col
+        #     from_row = 7-from_row
+            
+
         if(idx<56):
             nb = idx
             distance = (nb % 7) + 1
@@ -120,11 +136,7 @@ class chessEnv:
             promo = chess.ROOK if add==0 else chess.KNIGHT if add==1 else chess.BISHOP if add==2 else chess.QUEEN
             
             #queen move, no promo
-        if not white_to_move:
-            from_col = 8-from_col
-            from_row = 8-from_row
-            to_col = 8-to_col
-            to_row = 8-to_row
+      
         return chess.Move(from_square=((from_col-1)+8*(from_row-1)), to_square=((to_col-1)+8*(to_row-1)), promotion=promo, drop=None)
 
     def get_bitboard(self, board: chess.Board) -> numpy.ndarray:

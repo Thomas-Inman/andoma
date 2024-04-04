@@ -10,9 +10,9 @@ import tensorflow.keras.optimizers as optimizers
 class DeepQLearning:
     def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
         # Init vals
-        self.convNet = conv.convNet(inputShape, 32, 2)
+        self.convNet = conv.convNet(inputShape, 16, 2)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 32, 2)
+        self.targetNet = conv.convNet(inputShape, 16, 2)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
@@ -39,14 +39,14 @@ class DeepQLearning:
             #get legal moves
             legalMoves = self.env.get_board().legal_moves
             legalMoves = list(legalMoves)
-            random_move_array, idx = env.encode_move(random.choice(legalMoves), False)
+            random_move_array, idx = env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
             # print(random_move_array)
             return random_move_array, idx
         
         # filter legal moves
         legalMoves = self.env.get_board().legal_moves
         legalMoves = list(legalMoves)
-        legalMoves = [env.encode_move(move, True)[1] for move in legalMoves]
+        legalMoves = [env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
         actValues = self.model.predict(state)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues)]
@@ -64,10 +64,11 @@ class DeepQLearning:
             state, action, reward, nextState, done = sample
             target = self.model.predict(state)
             if done:
-                print(target)
-                print(action)
+                # print(target)
+                # print(action)
                 target[0][action] = reward
             else:
+                print(self.targetModel.predict(nextState)[0])
                 Q_future = max(self.targetModel.predict(nextState)[0])
                 target[0][action] = reward + Q_future * self.gamma
             self.model.fit(state, target, epochs=1, verbose=0)
@@ -81,11 +82,14 @@ class DeepQLearning:
             state = self.env.reset()
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
-            while not done:
+            valid = True
+            while (not done) and valid:
                 action, action_idx = self.act(state)
                 # print(action)
                 # print("!!!!!!!!!")
-                nextState, reward, done, _ = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
+                nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
+                # print(self.env.get_board().turn)
+                # print(valid)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 self.remember(state, action_idx, reward, nextState, done)
                 state = nextState
@@ -99,6 +103,6 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 2000, 0.95, 1.0, 0.995, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 200, 0.95, 0.5, 0.4, 0.95)
     dql.train(1000)
     
