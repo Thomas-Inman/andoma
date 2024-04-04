@@ -24,11 +24,11 @@ class convNet:
             x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
-        for _ in range(convDepth):
-            x = layers.Dense( boardSize * 76, 'relu')(x) # An array of size convSize * boardSize
+        # for _ in range(convDepth):
+        x = layers.Dense( boardSize * 76, 'softmax')(x) # An array of size convSize * boardSize
         x = layers.Reshape((76, 8, 8))(x)
         self.model = models.Model(inputs=board_3d, outputs=x)
-        self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
+        self.model.compile(optimizer = optimizers.Adam(5e-4), loss='categorical_crossentropy')
     
     def fit(self, train_x, train_y, epochs=100):
         assert train_x.shape[0] == train_y.shape[0]

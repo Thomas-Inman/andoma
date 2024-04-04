@@ -3,6 +3,7 @@ import random
 import chess
 import conv
 import chessenv
+import movegeneration
 import tensorflow.keras.optimizers as optimizers
 
 
@@ -35,8 +36,9 @@ class DeepQLearning:
             self.memory.pop(0)
 
     def random_move(self):
-        legalMoves = self.env.get_board().legal_moves
-        legalMoves = list(legalMoves)
+        # legalMoves = self.env.get_board().legal_moves
+        # legalMoves = list(legalMoves)
+        legalMoves = [movegeneration.next_move(2, self.env.get_board())]
         random_move_array, idx = self.env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
         return random_move_array, idx
     def act(self, state):
@@ -88,8 +90,8 @@ class DeepQLearning:
 
     def train(self, episodes):
         for episode in range(episodes):
-            if episode % 10 == 0:
-                print("Episode: ", episode)
+            
+            print("Episode: ", episode)
             state = self.env.reset()
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
@@ -106,12 +108,13 @@ class DeepQLearning:
                 state = nextState
             if self.env.board.status() == chess.Status.VALID:
                 self.replay()
+            print("Finished episode: ", episode)
+
             if episode % 10 == 0:
-                print("Finished episode: ", episode)
                 self.targetModel.set_weights(self.model.get_weights())
                 
-        self.model.save("model.h5")
-        self.targetModel.save("targetModel.h5")
+        self.model.save("model2.h5")
+        self.targetModel.save("targetModel2.h5")
     
     def load(self):
         self.model.load_weights("model.h5")
@@ -119,7 +122,7 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.2, 0.9, 0.4, 0.9, 5)
-    # dql.train(1000)
-    dql.load()
+    dql = DeepQLearning(env, (12, 8, 8), 500, 0.9, 0.9, 0.4, 0.9, 32)
+    dql.train(1000)
+    # dql.load()
     

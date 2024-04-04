@@ -41,6 +41,7 @@ class chessEnv:
             # eval = 0
         if self.board.is_fivefold_repetition():#penalize for doing that
             print("\n\n\nFivefold Repetition\n\n\n")#TODO: prevent repetition
+            eval = float("inf") if self.board.turn else -float("inf")
             self.fivefold_repetition_count += 1
         if self.board.status()!=chess.Status.VALID:
             print("\n\n\nInvalid\n\n\n")
