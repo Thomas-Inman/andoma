@@ -104,6 +104,10 @@ class DeepQLearning:
         print(self.env.board)
         return v
 
+    def load(self, name):
+        self.model.load_weights(name)
+        self.targetModel.load_weights(name)
+
     def train(self, episodes):
         for episode in range(episodes):
             if episode % 10 == 0:
