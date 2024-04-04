@@ -206,7 +206,7 @@ def act(agent, state, env):
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
         actValues = agent.model.predict(state, verbose=1)[0]
-        os.system('cls')
+        # os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if agent.env.get_board().turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])

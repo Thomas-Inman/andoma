@@ -77,7 +77,7 @@ class DeepQLearning:
             # print(state)
             # os.system('cls')
             if done:
-                target = [[reward]]
+                target:numpy.ndarray = numpy.array([[reward]])
             else:
                 # filter legal moves
                 legalMoves = self.env.board.legal_moves
@@ -86,12 +86,13 @@ class DeepQLearning:
                 Q_future = self.targetModel.predict(nextState, verbose=1)
                 # os.system('cls')
                 target = [[reward]] + Q_future * self.gamma
-                # print(target)
+                print(target.shape)
             try:
                 self.model.fit(state, target, epochs=1, verbose=1)
             except Exception as e:
-                # print(state)
-                # print(target)
+                print(state.shape)
+                print(target)
+                # pass
                 raise e
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
@@ -99,7 +100,7 @@ class DeepQLearning:
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
         v = self.model.predict(state, verbose=1)[0][0]
-        os.system('cls')
+        # os.system('cls')
         print(self.env.board)
         return v
 
@@ -124,7 +125,8 @@ class DeepQLearning:
                 valid = self.env.board.status() == chess.Status.VALID
                 # print(self.env.board.turn)
                 # print(valid)
-                nextState = numpy.reshape(self.env.get_bitboard(self.env.board), [1, 12, 8, 8])
+                nextState = self.env.get_bitboard(self.env.board)
+                nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 turn = self.env.board.turn
                 self.remember(state, self.env.encode_move(nextMove, True, self.env.board.turn)[1], reward if self.env.board.turn else -reward, nextState, done, turn)
                 state = nextState
