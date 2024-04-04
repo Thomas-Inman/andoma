@@ -35,14 +35,15 @@ class chessEnv:
         if self.board.is_stalemate():
             print("\n\n\nStalemate\n\n\n")
             self.stalemate_count += 1
-            # eval = 0
+            eval = 0
         if self.board.is_insufficient_material():
             print("\n\n\nInsufficient Material\n\n\n")
             self.insufficient_material_count += 1
-            # eval = 0
+            eval = 0
         if self.board.is_fivefold_repetition():#penalize for doing that
             print("\n\n\nFivefold Repetition\n\n\n")#TODO: prevent repetition
-            eval = float("inf") if not turn else -float("inf")
+            # eval = float("inf") if not turn else -float("inf")
+            eval=0
             self.fivefold_repetition_count += 1
         if self.board.status()!=chess.Status.VALID:
             print("\n\n\nInvalid\n\n\n")

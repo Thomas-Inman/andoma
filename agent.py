@@ -101,6 +101,9 @@ class DeepQLearning:
                 if not self.env.board.is_legal(self.env.decode_move(action, self.env.get_board().turn)):
                     print("DEBUG: Illegal move")
                     action, action_idx = self.random_move()
+                if self.env.board.is_repetition(2):
+                    print("DEBUG: STOP REPEATING MOVES UGHHH")
+                    action, action_idx = self.random_move()
                 
                 nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
                 nextState = numpy.reshape(nextState, [1, 2, 12, 8, 8])
