@@ -35,10 +35,12 @@ class DeepQLearning:
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
-    def random_move(self):
-        # legalMoves = self.env.get_board().legal_moves
-        # legalMoves = list(legalMoves)
-        legalMoves = [movegeneration.next_move(2, self.env.get_board())]
+    def random_move(self, _random = False):
+        if _random:
+            legalMoves = self.env.get_board().legal_moves
+            legalMoves = list(legalMoves)
+        else:
+            legalMoves = [movegeneration.next_move(2, self.env.get_board())]
         random_move_array, idx = self.env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
         return random_move_array, idx
     def act(self, state):
@@ -100,10 +102,10 @@ class DeepQLearning:
                 action, action_idx = self.act(state)
                 if not self.env.board.is_legal(self.env.decode_move(action, self.env.get_board().turn)):
                     print("DEBUG: Illegal move")
-                    action, action_idx = self.random_move()
+                    action, action_idx = self.random_move(True)
                 if self.env.board.is_repetition(2):
                     print("DEBUG: STOP REPEATING MOVES UGHHH")
-                    action, action_idx = self.random_move()
+                    action, action_idx = self.random_move(True)
                 
                 nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
                 nextState = numpy.reshape(nextState, [1, 2, 12, 8, 8])
@@ -126,7 +128,7 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (2, 12, 8, 8), 500, 0.9, 0.9, 0.1, 0.9, 32)
+    dql = DeepQLearning(env, (2, 12, 8, 8), 500, 0.5, 0.9, 0.1, 0.9, 32)
     dql.train(1000)
     # dql.load()
     

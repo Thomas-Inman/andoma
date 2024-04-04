@@ -21,11 +21,11 @@ class convNet:
         # This creates the hidden layers in the convNet
         x = board_3d
         for _ in range(convDepth):
-            x = layers.Conv3D(filters=convSize, kernel_size=5, padding='same', activation='relu', data_format="channels_last")(x)
+            x = layers.Conv3D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
         # for _ in range(convDepth):
-        x = layers.Dense( boardSize * 76, 'softmax')(x) # An array of size convSize * boardSize
+        x = layers.Dense( boardSize * 76, 'relu')(x) # An array of size convSize * boardSize
         x = layers.Reshape((76, 8, 8))(x)
         self.model = models.Model(inputs=board_3d, outputs=x)
         self.model.compile(optimizer = optimizers.Adam(5e-4), loss='categorical_crossentropy')

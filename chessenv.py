@@ -19,7 +19,7 @@ class chessEnv:
         self.board.reset()
         return self.get_bitboard(self.board)
     
-    def step(self, move: chess.Move) -> Union[chess.Board, bool]:
+    def step(self, move: chess.Move):
         turn = self.board.turn
         eval = evaluate.evaluate_board(self.board)
         self.board.push(move=move)
