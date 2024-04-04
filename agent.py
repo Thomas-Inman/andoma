@@ -114,6 +114,6 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 200, 0.95, 0.5, 0.4, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 200, 0.95, 0.5, 0.1, 0.95)
     dql.train(1000)
     
