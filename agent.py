@@ -28,9 +28,9 @@ class DeepQLearning:
         self.env = env
         self.memorySize = memorySize
         self.batchSize = 32
-        self.model.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
+        self.model.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
         self.model.summary()
-        self.targetModel.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
+        self.targetModel.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
         self.targetModel.summary()
         
 
