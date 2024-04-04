@@ -29,8 +29,8 @@ class DeepQLearning:
         self.targetModel.summary()
         
 
-    def remember(self, state, action, reward, nextState, done):
-        self.memory.append((state, action, reward, nextState, done))
+    def remember(self, state, action_idx, reward, nextState, done):
+        self.memory.append((state, action_idx, reward, nextState, done))
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
@@ -39,9 +39,9 @@ class DeepQLearning:
             #get legal moves
             legalMoves = self.env.get_board().legal_moves
             legalMoves = list(legalMoves)
-            random_move_array = env.encode_move(random.choice(legalMoves), False)[0]
+            random_move_array, idx = env.encode_move(random.choice(legalMoves), False)
             # print(random_move_array)
-            return random_move_array
+            return random_move_array, idx
         
         # filter legal moves
         legalMoves = self.env.get_board().legal_moves
@@ -53,7 +53,7 @@ class DeepQLearning:
         arr = numpy.zeros(shape=[76, 8, 8])
         arr[mx[0]][mx[1]][mx[2]] = 1
         # print(arr)
-        return arr
+        return arr, (mx[0], mx[1], mx[2])
     
     
     def replay(self):
@@ -64,6 +64,8 @@ class DeepQLearning:
             state, action, reward, nextState, done = sample
             target = self.model.predict(state)
             if done:
+                print(target)
+                print(action)
                 target[0][action] = reward
             else:
                 Q_future = max(self.targetModel.predict(nextState)[0])
@@ -80,12 +82,12 @@ class DeepQLearning:
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
             while not done:
-                action = self.act(state)
+                action, action_idx = self.act(state)
                 # print(action)
                 # print("!!!!!!!!!")
                 nextState, reward, done, _ = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
-                self.remember(state, action, reward, nextState, done)
+                self.remember(state, action_idx, reward, nextState, done)
                 state = nextState
             self.replay()
             if episode % 10 == 0:
