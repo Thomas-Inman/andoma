@@ -8,11 +8,11 @@ import tensorflow.keras.optimizers as optimizers
 
 
 class DeepQLearning:
-    def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
+    def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay, batchSize=32):
         # Init vals
-        self.convNet = conv.convNet(inputShape, 16, 2)
+        self.convNet = conv.convNet(inputShape, 16, 5)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 16, 2)
+        self.targetNet = conv.convNet(inputShape, 16, 5)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
@@ -22,7 +22,7 @@ class DeepQLearning:
         self.epsilonDecay = epsilonDecay
         self.env = env
         self.memorySize = memorySize
-        self.batchSize = 32
+        self.batchSize = batchSize
         self.model.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
         self.model.summary()
         self.targetModel.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
@@ -118,6 +118,6 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.7, 0.9, 0.1, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 0.2, 0.9, 0.4, 0.9, 10)
     dql.train(1000)
     

@@ -39,10 +39,9 @@ class chessEnv:
             print("\n\n\nInsufficient Material\n\n\n")
             self.insufficient_material_count += 1
             eval = 0
-        if self.board.is_fivefold_repetition():
-            print("\n\n\nFivefold Repetition\n\n\n")
+        if self.board.is_fivefold_repetition():#penalize for doing that
+            print("\n\n\nFivefold Repetition\n\n\n")#TODO: prevent repetition
             self.fivefold_repetition_count += 1
-            eval = 0
         if self.board.status()!=chess.Status.VALID:
             print("\n\n\nInvalid\n\n\n")
             self.invalid_count += 1
