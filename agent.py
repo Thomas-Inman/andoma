@@ -29,8 +29,8 @@ class DeepQLearning:
         self.targetModel.summary()
         
 
-    def remember(self, state, action_idx, reward, nextState, done):
-        self.memory.append((state, action_idx, reward, nextState, done))
+    def remember(self, state, action_idx, reward, nextState, done, turn):
+        self.memory.append((state, action_idx, reward, nextState, done, turn))
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
@@ -49,7 +49,7 @@ class DeepQLearning:
         legalMoves = [env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
         actValues = self.model.predict(state)[0]
         actValues = [actValues[move] for move in legalMoves]
-        mx = legalMoves[numpy.argmax(actValues)]
+        mx = legalMoves[numpy.argmax(actValues) if self.env.get_board().turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
         arr[mx[0]][mx[1]][mx[2]] = 1
         # print(arr)
@@ -61,7 +61,7 @@ class DeepQLearning:
             return
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
-            state, action, reward, nextState, done = sample
+            state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state)
             if done:
                 # print(target)
@@ -71,16 +71,14 @@ class DeepQLearning:
                 # filter legal moves
                 legalMoves = self.env.get_board().legal_moves
                 legalMoves = list(legalMoves)
-                legalMoves = [env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
+                legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
                 Q_future = self.targetModel.predict(nextState)[0]
                 Q_future = [Q_future[move] for move in legalMoves]
                 try:
-                    Q_future = numpy.max(Q_future)
+                    Q_future = numpy.max(Q_future) if turn else numpy.min(Q_future)
                 except:
                     Q_future = 0
 
-
-                # Q_future = max(self.targetModel.predict(nextState)[0])
                 target[0][action] = reward + Q_future * self.gamma
             self.model.fit(state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilonMin:
@@ -102,7 +100,8 @@ class DeepQLearning:
                 # print(self.env.get_board().turn)
                 # print(valid)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
-                self.remember(state, action_idx, reward, nextState, done)
+                turn = self.env.board.turn
+                self.remember(state, action_idx, reward if self.env.board.turn else -reward, nextState, done, turn)
                 state = nextState
             self.replay()
             if episode % 10 == 0:
@@ -114,6 +113,6 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 200, 0.95, 0.5, 0.1, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 0.7, 0.9, 0.1, 0.95)
     dql.train(1000)
     

@@ -181,9 +181,6 @@ def evaluate_board(board: chess.Board) -> float:
     """
     total = 0
     end_game = check_end_game(board)
-    bitboard = chessenv.get_bitboard(board)
-    print(bitboard)
-    assert False
     for square in chess.SQUARES:
         piece = board.piece_at(square)
         if not piece:

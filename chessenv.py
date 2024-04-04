@@ -16,8 +16,22 @@ class chessEnv:
     def step(self, move: chess.Move) -> Union[chess.Board, bool]:
         eval = evaluate.move_value(self.board, move, False)
         self.board.push(move=move)
-        # print(self.board)
+        print(self.board)
         # self.board.pop()
+        if self.board.is_checkmate():
+            print("\n\n\nCheckmate\n\n\n")
+            eval = 1000000000000000 if self.board.turn else -1000000000000000
+        if self.board.is_stalemate():
+            print("\n\n\nStalemate\n\n\n")
+            eval = 0
+        if self.board.is_insufficient_material():
+            print("\n\n\nInsufficient Material\n\n\n")
+            eval = 0
+        if self.board.is_fivefold_repetition():
+            print("\n\n\nFivefold Repetition\n\n\n")
+            eval = 0
+        if self.board.status()!=chess.Status.VALID:
+            print("\n\n\nInvalid\n\n\n")
         return self.get_bitboard(self.board), eval, (self.board.is_checkmate() or self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.is_fivefold_repetition() or self.board.status()!=chess.Status.VALID) , self.board.status() == chess.Status.VALID
     
     def get_board(self) -> chess.Board:
