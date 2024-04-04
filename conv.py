@@ -1,9 +1,9 @@
-import numpy
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow.keras.models as models
 import tensorflow.keras.layers as layers
-import tensorflow.keras.utils as utils
 import tensorflow.keras.optimizers as optimizers
-import tensorflow.keras.callbacks as callbacks
+
 
 class convNet:
     def __init__(self, inputShape, convSize, convDepth):

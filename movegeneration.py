@@ -1,8 +1,10 @@
 from typing import Dict, List, Any
 import chess
-import sys
 import time
 from evaluate import evaluate_board, move_value, check_end_game
+import numpy
+import random
+
 
 debug_info: Dict[str, Any] = {}
 
@@ -15,8 +17,8 @@ def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
     """
     What is the next best move?
     """
-    debug_info.clear()
-    debug_info["nodes"] = 0
+    # debug_info.clear()
+    # debug_info["nodes"] = 0
     t0 = time.time()
 
     move = minimax_root(depth, board)
@@ -44,7 +46,7 @@ def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
     return list(in_order)
 
 
-def minimax_root(depth: int, board: chess.Board) -> chess.Move:
+def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -66,7 +68,7 @@ def minimax_root(depth: int, board: chess.Board) -> chess.Move:
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -78,18 +80,53 @@ def minimax_root(depth: int, board: chess.Board) -> chess.Move:
     return best_move_found
 
 
+def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess.Move:
+    """
+    What is the highest value move per our evaluation function?
+    """
+    # White always wants to maximize (and black to minimize)
+    # the board score according to evaluate_board()
+    maximize = board.turn == chess.WHITE
+    best_move = -float("inf")
+    if not maximize:
+        best_move = float("inf")
+
+    moves = get_ordered_moves(board)
+    best_move_found = moves[0]
+
+    for move in moves:
+        board.push(move)
+        # Checking if draw can be claimed at this level, because the threefold repetition check
+        # can be expensive. This should help the bot avoid a draw if it's not favorable
+        # https://python-chess.readthedocs.io/en/latest/core.html#chess.Board.can_claim_draw
+        if board.can_claim_draw():
+            value = 0.0
+        else:
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
+        board.pop()
+        if maximize and value >= best_move:
+            best_move = value
+            best_move_found = move
+        elif not maximize and value <= best_move:
+            best_move = value
+            best_move_found = move
+
+    return best_move_found, best_move
+
+
 def minimax(
     depth: int,
     board: chess.Board,
     alpha: float,
     beta: float,
     is_maximising_player: bool,
+    agent=None,
 ) -> float:
     """
     Core minimax logic.
     https://en.wikipedia.org/wiki/Minimax
     """
-    debug_info["nodes"] += 1
+    # debug_info["nodes"] += 1
 
     if board.is_checkmate():
         # The previous move resulted in checkmate
@@ -105,11 +142,31 @@ def minimax(
     if is_maximising_player:
         best_move = -float("inf")
         moves = get_ordered_moves(board)
-        for move in moves:
-            board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
-            # Each ply after a checkmate is slower, so they get ranked slightly less
-            # We want the fastest mate!
+        state = agent.env.get_bitboard(board)
+        state = numpy.reshape(state, [1, 12, 8, 8])
+        arr, _ = act(agent, state, agent.env)
+        move = agent.env.decode_move(arr, board.turn)
+        board.push(move)
+        if board.status() != chess.Status.VALID:
+            board.pop()
+            for move in moves:
+                board.push(move)
+                curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
+                if curr_move > MATE_THRESHOLD:
+                    curr_move -= 1
+                elif curr_move < -MATE_THRESHOLD:
+                    curr_move += 1
+                best_move = max(
+                    best_move,
+                    curr_move,
+                )
+                board.pop()
+                alpha = max(beta, best_move)
+                if beta <= alpha:
+                    return best_move
+            return best_move
+        else:
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:
@@ -119,16 +176,44 @@ def minimax(
                 curr_move,
             )
             board.pop()
-            alpha = max(alpha, best_move)
+            alpha = max(beta, best_move)
             if beta <= alpha:
                 return best_move
+
         return best_move
+        
     else:
         best_move = float("inf")
         moves = get_ordered_moves(board)
-        for move in moves:
-            board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
+        state = agent.env.get_bitboard(board)
+        state = numpy.reshape(state, [1, 12, 8, 8])
+        arr, _ = act(agent, state, agent.env)
+        move = agent.env.decode_move(arr, board.turn)
+        board.push(move)
+
+
+        if board.status() != chess.Status.VALID:
+            board.pop()
+            for move in moves:
+                board.push(move)
+                curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
+                # Each ply after a checkmate is slower, so they get ranked slightly less
+                # We want the fastest mate!
+                if curr_move > MATE_THRESHOLD:
+                    curr_move -= 1
+                elif curr_move < -MATE_THRESHOLD:
+                    curr_move += 1
+                best_move = min(
+                    best_move,
+                    curr_move,
+                )
+                board.pop()
+                beta = min(alpha, best_move)
+                if beta <= alpha:
+                    return best_move
+            return best_move
+        else:
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:
@@ -138,7 +223,49 @@ def minimax(
                 curr_move,
             )
             board.pop()
-            beta = min(beta, best_move)
+            beta = min(alpha, best_move)
             if beta <= alpha:
                 return best_move
-        return best_move
+
+
+
+
+        
+        # for move in moves:
+        #     board.push(move)
+        #     curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player)
+        #     if curr_move > MATE_THRESHOLD:
+        #         curr_move -= 1
+        #     elif curr_move < -MATE_THRESHOLD:
+        #         curr_move += 1
+        #     best_move = min(
+        #         best_move,
+        #         curr_move,
+        #     )
+        #     board.pop()
+        #     beta = min(beta, best_move)
+        #     if beta <= alpha:
+        #         return best_move
+        # return best_move
+
+def act(agent, state, env):
+        if numpy.random.rand() <= agent.epsilon:
+            #get legal moves
+            legalMoves = agent.env.get_board().legal_moves
+            legalMoves = list(legalMoves)
+            random_move_array, idx = env.encode_move(random.choice(legalMoves), False, agent.env.get_board().turn)
+            # print(random_move_array)
+            return random_move_array, idx
+        
+        # filter legal moves
+        legalMoves = agent.env.get_board().legal_moves
+        legalMoves = list(legalMoves)
+        legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
+        actValues = agent.model.predict(state, verbose=0)[0]
+        actValues = [actValues[move] for move in legalMoves]
+        mx = legalMoves[numpy.argmax(actValues) if agent.env.get_board().turn else numpy.argmin(actValues)]
+        arr = numpy.zeros(shape=[76, 8, 8])
+        arr[mx[0]][mx[1]][mx[2]] = 1
+        # print(arr)
+        return arr, (mx[0], mx[1], mx[2])
+    
