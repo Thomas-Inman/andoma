@@ -45,7 +45,7 @@ def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
     )
     return list(in_order)
 
-def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
+def minimax_root(depth: int, board: chess.Board, training=False, agent=None) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -67,8 +67,8 @@ def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
-            print(value)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent)
+            # print(value)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -79,7 +79,7 @@ def minimax_root(depth: int, board: chess.Board, agent=None) -> chess.Move:
 
     return best_move_found
 
-def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess.Move:
+def minimax_root_with_value(depth: int, board: chess.Board, training=False, agent=None, epsilon=0) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -101,8 +101,8 @@ def minimax_root_with_value(depth: int, board: chess.Board, agent=None) -> chess
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, agent)
-            print(value)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent, epsilon)
+            # print(value)
         board.pop()
         if maximize and value >= best_move:
             best_move = value
@@ -121,7 +121,9 @@ def minimax(
     alpha: float,
     beta: float,
     is_maximising_player: bool,
+    training=False,
     agent=None,
+    epsilon=0
 ) -> float:
     """
     Core minimax logic.
@@ -138,14 +140,18 @@ def minimax(
         return 0
 
     if depth == 0:
-        return evaluate_board(board) if agent is None else agent.evaluate_board(board)
+        if numpy.random.rand() <= epsilon:
+            return evaluate_board(board)
+        else:
+            return evaluate_board(board) if (agent is None or not training) else agent.evaluate_board(board)
+        
 
     if is_maximising_player:
         best_move = -float("inf")
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon)
             # Each ply after a checkmate is slower, so they get ranked slightly less
             # We want the fastest mate!
             if curr_move > MATE_THRESHOLD:
@@ -166,7 +172,7 @@ def minimax(
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, agent)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:
@@ -195,7 +201,7 @@ def act(agent, state, env):
         legalMoves = agent.env.get_board().legal_moves
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
-        actValues = agent.model.predict(state, verbose=0)[0]
+        actValues = agent.model.predict(state, verbose=1)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if agent.env.get_board().turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])

@@ -57,7 +57,7 @@ class DeepQLearning:
         legalMoves = self.env.board.legal_moves
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
-        actValues = self.model.predict(state, verbose=0)[0]
+        actValues = self.model.predict(state, verbose=1)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -72,28 +72,29 @@ class DeepQLearning:
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
             state, action, reward, nextState, done, turn = sample
-            target = self.model.predict(state, verbose=0)
+            target = self.model.predict(state, verbose=1)
             if done:
-                target[0][action] = reward
+                target = reward
             else:
                 # filter legal moves
                 legalMoves = self.env.board.legal_moves
                 legalMoves = list(legalMoves)
                 legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
-                Q_future = self.targetModel.predict(nextState, verbose=0)[0]
-                Q_future = [Q_future[move] for move in legalMoves]
-                try:
-                    Q_future = numpy.max(Q_future) if turn else numpy.min(Q_future)
-                except:
-                    Q_future = 0
-                target[0][action] = reward + Q_future * self.gamma
-            self.model.fit(state, target, epochs=1, verbose=0)
+                Q_future = self.targetModel.predict(nextState, verbose=1)
+                # Q_future = [Q_future[move] for move in legalMoves]
+                # try:
+                #     Q_future = numpy.max(Q_future) if turn else numpy.min(Q_future)
+                # except:
+                #     Q_future = 0
+                target = [[reward]] + Q_future * self.gamma
+                
+            self.model.fit(state, target, epochs=1, verbose=1)
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
 
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
-        return self.model.predict(state, verbose=0)[0][0]
+        return self.model.predict(state, verbose=1)[0][0]
 
     def train(self, episodes):
         for episode in range(episodes):
@@ -110,7 +111,7 @@ class DeepQLearning:
                 # nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.board.turn))
                 print(self.env.board)
                 # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
-                nextMove, reward = movegeneration.minimax_root_with_value(2, self.env.board, self)
+                nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon)
                 self.env.board.push(nextMove)
                 done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
                 valid = self.env.board.status() == chess.Status.VALID
