@@ -11,9 +11,9 @@ import tensorflow.keras.optimizers as optimizers
 class DeepQLearning:
     def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay, batchSize=32):
         # Init vals
-        self.convNet = conv.convNet(inputShape, 16, 5)
+        self.convNet = conv.convNet(inputShape, 32, 2)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 16, 5)
+        self.targetNet = conv.convNet(inputShape, 32, 2)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
@@ -93,16 +93,17 @@ class DeepQLearning:
             
             print("Episode: ", episode)
             state = self.env.reset()
-            state = numpy.reshape(state, [1, 12, 8, 8])
+            state = numpy.reshape(state, [1, 2, 12, 8, 8])
             done = False
             valid = True
             while (not done) and valid:
                 action, action_idx = self.act(state)
                 if not self.env.board.is_legal(self.env.decode_move(action, self.env.get_board().turn)):
+                    print("DEBUG: Illegal move")
                     action, action_idx = self.random_move()
                 
                 nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
-                nextState = numpy.reshape(nextState, [1, 12, 8, 8])
+                nextState = numpy.reshape(nextState, [1, 2, 12, 8, 8])
                 turn = self.env.board.turn
                 self.remember(self.env.board.copy(stack=False), state, action_idx, reward if self.env.board.turn else -reward, nextState, done, turn)
                 state = nextState
@@ -122,7 +123,7 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.9, 0.9, 0.4, 0.9, 32)
+    dql = DeepQLearning(env, (2, 12, 8, 8), 50, 0.9, 0.9, 0.1, 0.9, 32)
     dql.train(1000)
     # dql.load()
     

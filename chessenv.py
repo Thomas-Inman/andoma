@@ -20,14 +20,15 @@ class chessEnv:
         return self.get_bitboard(self.board)
     
     def step(self, move: chess.Move) -> Union[chess.Board, bool]:
+        turn = self.board.turn
         eval = evaluate.evaluate_board(self.board)
         self.board.push(move=move)
         print(self.board)
         # self.board.pop()
         if self.board.is_checkmate():
-            print("\n\n\nCheckmate for ", "white\n\n\n" if not self.board.turn else "black")
+            print("\n\n\nCheckmate for ", "white\n\n\n" if turn else "black")
             # eval = float("inf") if not self.board.turn else -float("inf")
-            if not self.board.turn:
+            if turn:
                 self.checkmate_count_white += 1
             else:
                 self.checkmate_count_black += 1
@@ -41,7 +42,7 @@ class chessEnv:
             # eval = 0
         if self.board.is_fivefold_repetition():#penalize for doing that
             print("\n\n\nFivefold Repetition\n\n\n")#TODO: prevent repetition
-            eval = float("inf") if self.board.turn else -float("inf")
+            eval = float("inf") if not turn else -float("inf")
             self.fivefold_repetition_count += 1
         if self.board.status()!=chess.Status.VALID:
             print("\n\n\nInvalid\n\n\n")
@@ -192,11 +193,11 @@ class chessEnv:
         
         bitboard = board.piece_map()
         
-        b_arr = numpy.zeros(shape=[12, 8, 8])
+        b_arr = numpy.zeros(shape=[2, 12, 8, 8])
         for n in range(8):
             for m in range(8):
                 if(bitboard.get(n + 8*m) is not None):
-                    b_arr[map_symbol(bitboard[n + 8*m].symbol())][m][n] = 1
+                    b_arr[int(board.turn)][map_symbol(bitboard[n + 8*m].symbol())][m][n] = 1
 
         
         return b_arr

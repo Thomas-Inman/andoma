@@ -21,7 +21,7 @@ class convNet:
         # This creates the hidden layers in the convNet
         x = board_3d
         for _ in range(convDepth):
-            x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
+            x = layers.Conv3D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
         # for _ in range(convDepth):
@@ -51,7 +51,7 @@ class convNet:
 # print(net.forward(np.random.uniform(1, 2, size=(8, 8, 14))))
     
 if __name__ == '__main__':
-    net = convNet((12,8,8), 32, 2)
+    net = convNet((2, 12,8,8), 32, 2)
     model = net.model
     model.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
     model.summary()
