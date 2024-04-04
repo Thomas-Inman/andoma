@@ -55,7 +55,7 @@ class convNet:
 if __name__ == '__main__':
     net = convNet((12,8,8), 32, 2)
     model = net.model
-    model.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
+    model.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
     model.summary()
     # utils.plot_model(model, to_file='model.png', show_shapes=True)
     

@@ -4,6 +4,7 @@ import time
 from evaluate import evaluate_board, move_value, check_end_game
 import numpy
 import random
+import os
 
 
 debug_info: Dict[str, Any] = {}
@@ -17,15 +18,15 @@ def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
     """
     What is the next best move?
     """
-    # debug_info.clear()
-    # debug_info["nodes"] = 0
+    debug_info.clear()
+    debug_info["nodes"] = 0
     t0 = time.time()
 
     move = minimax_root(depth, board)
 
-    # debug_info["time"] = time.time() - t0
-    # if debug == True:
-    #     print(f"info {debug_info}")
+    debug_info["time"] = time.time() - t0
+    if debug == True:
+        print(f"info {debug_info}")
     return move
 
 
@@ -129,7 +130,10 @@ def minimax(
     Core minimax logic.
     https://en.wikipedia.org/wiki/Minimax
     """
-    # debug_info["nodes"] += 1
+    debug_info.clear()
+    debug_info["nodes"] = 0
+    t0 = time.time()
+    debug_info["nodes"] += 1
 
     if board.is_checkmate():
         # The previous move resulted in checkmate
@@ -202,6 +206,7 @@ def act(agent, state, env):
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
         actValues = agent.model.predict(state, verbose=1)[0]
+        os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if agent.env.get_board().turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])

@@ -28,9 +28,9 @@ class DeepQLearning:
         self.env = env
         self.memorySize = memorySize
         self.batchSize = 32
-        self.model.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
+        self.model.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
         self.model.summary()
-        self.targetModel.compile(optimizer=optimizers.Adam(), loss='categorical_crossentropy')
+        self.targetModel.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
         self.targetModel.summary()
         
 
@@ -58,6 +58,7 @@ class DeepQLearning:
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1)[0]
+        # os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -73,28 +74,34 @@ class DeepQLearning:
         for sample in samples:
             state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state, verbose=1)
+            # print(state)
+            # os.system('cls')
             if done:
-                target = reward
+                target = [[reward]]
             else:
                 # filter legal moves
                 legalMoves = self.env.board.legal_moves
                 legalMoves = list(legalMoves)
                 legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
                 Q_future = self.targetModel.predict(nextState, verbose=1)
-                # Q_future = [Q_future[move] for move in legalMoves]
-                # try:
-                #     Q_future = numpy.max(Q_future) if turn else numpy.min(Q_future)
-                # except:
-                #     Q_future = 0
+                # os.system('cls')
                 target = [[reward]] + Q_future * self.gamma
-                
-            self.model.fit(state, target, epochs=1, verbose=1)
+                # print(target)
+            try:
+                self.model.fit(state, target, epochs=1, verbose=1)
+            except Exception as e:
+                # print(state)
+                # print(target)
+                raise e
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
 
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
-        return self.model.predict(state, verbose=1)[0][0]
+        v = self.model.predict(state, verbose=1)[0][0]
+        os.system('cls')
+        print(self.env.board)
+        return v
 
     def train(self, episodes):
         for episode in range(episodes):
@@ -109,7 +116,7 @@ class DeepQLearning:
                 # print(action)
                 # print("!!!!!!!!!")
                 # nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.board.turn))
-                print(self.env.board)
+                # print(self.env.board)
                 # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
                 nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon)
                 self.env.board.push(nextMove)
