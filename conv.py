@@ -24,8 +24,8 @@ class convNet:
             x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
-        x = layers.Dense(convSize * boardSize, 'relu')(x) # An array of size convSize * boardSize
-        
+        x = layers.Dense( boardSize * 76, 'relu')(x) # An array of size convSize * boardSize
+        x = layers.Reshape((76, 8, 8))(x)
         self.model = models.Model(inputs=board_3d, outputs=x)
         self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
     

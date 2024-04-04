@@ -157,7 +157,6 @@ class chessEnv:
                 if(bitboard.get(n + 8*m) is not None):
                     b_arr[map_symbol(bitboard[n + 8*m].symbol())][m][n] = 1
 
-        # print(b_arr)
         
         return b_arr
 
