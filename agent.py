@@ -58,7 +58,7 @@ class DeepQLearning:
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1)[0]
-        # os.system('cls')
+        os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -75,7 +75,7 @@ class DeepQLearning:
             state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state, verbose=1)
             # print(state)
-            # os.system('cls')
+            os.system('cls')
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
@@ -86,7 +86,7 @@ class DeepQLearning:
                 Q_future = self.targetModel.predict(nextState, verbose=1)
                 # os.system('cls')
                 target = [[reward]] + Q_future * self.gamma
-                print(target.shape)
+                # print(target.shape)
             try:
                 self.model.fit(state, target, epochs=1, verbose=1)
             except Exception as e:
@@ -100,7 +100,7 @@ class DeepQLearning:
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
         v = self.model.predict(state, verbose=1)[0][0]
-        # os.system('cls')
+        os.system('cls')
         print(self.env.board)
         return v
 
