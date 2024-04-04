@@ -20,13 +20,13 @@ class chessEnv:
         return self.get_bitboard(self.board)
     
     def step(self, move: chess.Move) -> Union[chess.Board, bool]:
-        eval = evaluate.move_value(self.board, move, False)
+        eval = evaluate.evaluate_board(self.board)
         self.board.push(move=move)
         print(self.board)
         # self.board.pop()
         if self.board.is_checkmate():
             print("\n\n\nCheckmate for ", "white\n\n\n" if not self.board.turn else "black")
-            eval = float("inf") if not self.board.turn else -float("inf")
+            # eval = float("inf") if not self.board.turn else -float("inf")
             if not self.board.turn:
                 self.checkmate_count_white += 1
             else:
@@ -34,18 +34,18 @@ class chessEnv:
         if self.board.is_stalemate():
             print("\n\n\nStalemate\n\n\n")
             self.stalemate_count += 1
-            eval = 0
+            # eval = 0
         if self.board.is_insufficient_material():
             print("\n\n\nInsufficient Material\n\n\n")
             self.insufficient_material_count += 1
-            eval = 0
+            # eval = 0
         if self.board.is_fivefold_repetition():#penalize for doing that
             print("\n\n\nFivefold Repetition\n\n\n")#TODO: prevent repetition
             self.fivefold_repetition_count += 1
         if self.board.status()!=chess.Status.VALID:
             print("\n\n\nInvalid\n\n\n")
             self.invalid_count += 1
-            eval = 0
+            # eval = 0
         return self.get_bitboard(self.board), eval, (self.board.is_checkmate() or self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.is_fivefold_repetition() or self.board.status()!=chess.Status.VALID) , self.board.status() == chess.Status.VALID
     
     def get_board(self) -> chess.Board:

@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 import chess
-import sys
+import numpy
 import time
 from evaluate import evaluate_board, move_value, check_end_game
 
@@ -25,6 +25,29 @@ def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
     if debug == True:
         print(f"info {debug_info}")
     return move
+
+def next_move_agent(depth: int, board: chess.Board, debug=True, agent=None) -> chess.Move:
+    """
+    What is the next best move?
+    """
+    debug_info.clear()
+    debug_info["nodes"] = 0
+    t0 = time.time()
+
+    # use agent to get the next move
+    state = agent.env.get_bitboard(board)
+    state = numpy.reshape(state, [1, 12, 8, 8])
+    action, _ = agent.act(state)
+    move = agent.env.decode_move(action, agent.env.get_board().turn)
+    # check if the move is legal
+    if not board.is_legal(move):
+        print("DEBUG: Illegal move, playing random move")
+        move = agent.env.decode_move(agent.random_move(), agent.env.get_board().turn)
+    debug_info["time"] = time.time() - t0
+    if debug == True:
+        print(f"info {debug_info}")
+    return move
+
 
 
 def get_ordered_moves(board: chess.Board) -> List[chess.Move]:

@@ -2,8 +2,9 @@
 
 import chess
 import argparse
-from movegeneration import next_move
-
+from movegeneration import next_move, next_move_agent
+from agent import DeepQLearning
+import chessenv
 
 def start():
     """
@@ -20,6 +21,31 @@ def start():
 
     while not board.is_game_over():
         board.push(next_move(get_depth(), board, debug=False))
+        print(render(board))
+        board.push(get_move(board))
+
+    print(f"\nResult: [w] {board.result()} [b]")
+
+
+def start_with_agent():
+    """
+    Start the command line user interface.
+    """
+    board = chess.Board()
+    user_side = (
+        chess.WHITE if input("Start as [w]hite or [b]lack:\n") == "w" else chess.BLACK
+    )
+
+    if user_side == chess.WHITE:
+        print(render(board))
+        board.push(get_move(board))
+
+    env = chessenv.chessEnv(board)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 0.2, 0.9, 0.4, 0.9, 5)
+    dql.load()
+
+    while not board.is_game_over():
+        board.push(next_move_agent(get_depth(), board, debug=False, agent=dql))
         print(render(board))
         board.push(get_move(board))
 
@@ -81,6 +107,6 @@ def get_depth() -> int:
 
 if __name__ == "__main__":
     try:
-        start()
+        start_with_agent()
     except KeyboardInterrupt:
         pass

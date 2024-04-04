@@ -29,15 +29,15 @@ class DeepQLearning:
         self.targetModel.summary()
         
 
-    def remember(self, state, action_idx, reward, nextState, done, turn):
-        self.memory.append((state, action_idx, reward, nextState, done, turn))
+    def remember(self, board, state, action_idx, reward, nextState, done, turn):
+        self.memory.append((board, state, action_idx, reward, nextState, done, turn))
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
     def random_move(self):
         legalMoves = self.env.get_board().legal_moves
         legalMoves = list(legalMoves)
-        random_move_array, idx = env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
+        random_move_array, idx = self.env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
         return random_move_array, idx
     def act(self, state):
         if numpy.random.rand() <= self.epsilon:
@@ -47,7 +47,7 @@ class DeepQLearning:
         # filter legal moves
         legalMoves = self.env.get_board().legal_moves
         legalMoves = list(legalMoves)
-        legalMoves = [env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
+        legalMoves = [self.env.encode_move(move, True, self.env.get_board().turn)[1] for move in legalMoves]
         actValues = self.model.predict(state)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.get_board().turn else numpy.argmin(actValues)]
@@ -62,7 +62,7 @@ class DeepQLearning:
             return
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
-            state, action, reward, nextState, done, turn = sample
+            sample_board, state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state)
             if done:
                 # print(target)
@@ -70,9 +70,9 @@ class DeepQLearning:
                 target[0][action] = reward
             else:
                 # filter legal moves
-                legalMoves = self.env.get_board().legal_moves
+                legalMoves = sample_board.legal_moves
                 legalMoves = list(legalMoves)
-                legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
+                legalMoves = [self.env.encode_move(move, True, turn)[1] for move in legalMoves]
                 Q_future = self.targetModel.predict(nextState)[0]
                 Q_future = [Q_future[move] for move in legalMoves]
                 try:
@@ -96,28 +96,30 @@ class DeepQLearning:
             valid = True
             while (not done) and valid:
                 action, action_idx = self.act(state)
-                # print(action)
-                # print("!!!!!!!!!")
                 if not self.env.board.is_legal(self.env.decode_move(action, self.env.get_board().turn)):
                     action, action_idx = self.random_move()
                 
                 nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
-                # print(self.env.get_board().turn)
-                # print(valid)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 turn = self.env.board.turn
-                self.remember(state, action_idx, reward if self.env.board.turn else -reward, nextState, done, turn)
+                self.remember(self.env.board.copy(stack=False), state, action_idx, reward if self.env.board.turn else -reward, nextState, done, turn)
                 state = nextState
-            self.replay()
+            if self.env.board.status() == chess.Status.VALID:
+                self.replay()
             if episode % 10 == 0:
                 print("Finished episode: ", episode)
                 self.targetModel.set_weights(self.model.get_weights())
                 
         self.model.save("model.h5")
         self.targetModel.save("targetModel.h5")
+    
+    def load(self):
+        self.model.load_weights("model.h5")
+        self.targetModel.load_weights("targetModel.h5")
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.2, 0.9, 0.4, 0.9, 10)
-    dql.train(1000)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 0.2, 0.9, 0.4, 0.9, 5)
+    # dql.train(1000)
+    dql.load()
     
