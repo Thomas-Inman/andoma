@@ -58,7 +58,7 @@ class DeepQLearning:
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1)[0]
-        os.system('cls')
+        # os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -75,7 +75,7 @@ class DeepQLearning:
             state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state, verbose=1)
             # print(state)
-            os.system('cls')
+            # os.system('cls')
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
@@ -100,7 +100,7 @@ class DeepQLearning:
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
         v = self.model.predict(state, verbose=1)[0][0]
-        os.system('cls')
+        # os.system('cls')
         print(self.env.board)
         return v
 
@@ -110,8 +110,7 @@ class DeepQLearning:
 
     def train(self, episodes):
         for episode in range(episodes):
-            if episode % 10 == 0:
-                print("Episode: ", episode)
+            print("Episode: ", episode)
             state = self.env.reset()
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
@@ -125,6 +124,16 @@ class DeepQLearning:
                 # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
                 nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon)
                 self.env.board.push(nextMove)
+                if self.env.board.is_checkmate():
+                    print("\n\n\nCheckmate for ", "white\n\n\n" if self.env.board.turn else "black\n\n\n")
+                if self.env.board.is_stalemate():
+                    print("\n\n\nStalemate\n\n\n")
+                if self.env.board.is_insufficient_material():
+                    print("\n\n\nInsufficient Material\n\n\n")
+                if self.env.board.is_fivefold_repetition():
+                    print("\n\n\nFivefold Repetition\n\n\n")
+                if self.env.board.status()!=chess.Status.VALID:
+                    print("\n\n\nInvalid\n\n\n")
                 done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
                 valid = self.env.board.status() == chess.Status.VALID
                 # print(self.env.board.turn)
@@ -132,11 +141,11 @@ class DeepQLearning:
                 nextState = self.env.get_bitboard(self.env.board)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 turn = self.env.board.turn
-                self.remember(state, self.env.encode_move(nextMove, True, self.env.board.turn)[1], reward if self.env.board.turn else -reward, nextState, done, turn)
+                self.remember(state, self.env.encode_move(nextMove, True, self.env.board.turn)[1], reward, nextState, done, turn)
                 state = nextState
             self.replay()
+            print("Finished episode: ", episode)
             if episode % 10 == 0:
-                print("Finished episode: ", episode)
                 self.targetModel.set_weights(self.model.get_weights())
                 
         self.model.save("model.h5")
@@ -145,5 +154,5 @@ class DeepQLearning:
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
     dql = DeepQLearning(env, (12, 8, 8), 500, 0.7, 0.9, 0.1, 0.95)
-    dql.train(1000)
+    dql.train(100) # test with 100 episodes
     
