@@ -34,14 +34,15 @@ class DeepQLearning:
         if len(self.memory) > self.memorySize:
             self.memory.pop(0)
 
+    def random_move(self):
+        legalMoves = self.env.get_board().legal_moves
+        legalMoves = list(legalMoves)
+        random_move_array, idx = env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
+        return random_move_array, idx
     def act(self, state):
         if numpy.random.rand() <= self.epsilon:
             #get legal moves
-            legalMoves = self.env.get_board().legal_moves
-            legalMoves = list(legalMoves)
-            random_move_array, idx = env.encode_move(random.choice(legalMoves), False, self.env.get_board().turn)
-            # print(random_move_array)
-            return random_move_array, idx
+            return self.random_move()
         
         # filter legal moves
         legalMoves = self.env.get_board().legal_moves
@@ -80,6 +81,7 @@ class DeepQLearning:
                     Q_future = 0
 
                 target[0][action] = reward + Q_future * self.gamma
+            # print("FITTING")
             self.model.fit(state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
@@ -96,6 +98,9 @@ class DeepQLearning:
                 action, action_idx = self.act(state)
                 # print(action)
                 # print("!!!!!!!!!")
+                if not self.env.board.is_legal(self.env.decode_move(action, self.env.get_board().turn)):
+                    action, action_idx = self.random_move()
+                
                 nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.get_board().turn))
                 # print(self.env.get_board().turn)
                 # print(valid)
