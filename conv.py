@@ -3,6 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow.keras.models as models
 import tensorflow.keras.layers as layers
 import tensorflow.keras.optimizers as optimizers
+from tensorflow.keras.regularizers import l2
 # import keras_tuner
 
 
@@ -25,15 +26,17 @@ class convNet:
         # This creates the hidden layers in the convNet
         x = board_3d
         for _ in range(convDepth):
-            x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
+            x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
-        x = layers.Dense(hp.Int("units", min_value=int(boardSize/2), max_value=128, step=32)  if hp is not None else boardSize, hp.Choice("activation", ["relu", "tanh"]) if hp is not None else "relu")(x) # An array of size convSize * boardSize
+        for _ in range(3):
+            x = layers.Dense(boardSize*6, "relu",kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize
+        x = layers.Dropout(rate=0.25)(x)
         # x = layers.Reshape((76, 8, 8))(x)
         # dot product of x
         x = layers.Dense(1)(x)
         
-        x = layers.Dropout(rate=0.25)(x)
+        
         self.model = models.Model(inputs=board_3d, outputs=x)
         learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log") if hp is not None else 5e-4
         self.model.compile(
