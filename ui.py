@@ -37,7 +37,7 @@ def start_with_agent():
         chess.WHITE if input("Start as [w]hite or [b]lack:\n") == "w" else chess.BLACK
     )
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.7, 0.9, 0.1, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95)
     dql.load("model.h5")
 
     if user_side == chess.WHITE:

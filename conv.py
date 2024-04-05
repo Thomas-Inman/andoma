@@ -3,6 +3,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow.keras.models as models
 import tensorflow.keras.layers as layers
 import tensorflow.keras.optimizers as optimizers
+# import keras_tuner
 
 
 class convNet:
@@ -13,7 +14,10 @@ class convNet:
         self.inputShape = inputShape
         self.buildConvNet(convSize, convDepth)
         
-    def buildConvNet(self, convSize, convDepth):
+    def buildConvNet(self, convSize, convDepth, hp=None):
+        #@param convSize : the size of the filter (will be the outputy size)
+        #@param convDepth : Number of Convolution layers in the model
+        #@param hp : Hyperparameters for the model
         # Define input layers
         board_3d = layers.Input(shape=self.inputShape)
         boardSize = 8*8
@@ -24,13 +28,20 @@ class convNet:
             x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last")(x)
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
-        x = layers.Dense( boardSize, 'relu')(x) # An array of size convSize * boardSize
+        x = layers.Dense(hp.Int("units", min_value=int(boardSize/2), max_value=128, step=32)  if hp is not None else boardSize, hp.Choice("activation", ["relu", "tanh"]) if hp is not None else "relu")(x) # An array of size convSize * boardSize
         # x = layers.Reshape((76, 8, 8))(x)
         # dot product of x
         x = layers.Dense(1)(x)
-
+        
+        x = layers.Dropout(rate=0.25)(x)
         self.model = models.Model(inputs=board_3d, outputs=x)
-        self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
+        learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log") if hp is not None else 5e-4
+        self.model.compile(
+            optimizer=optimizers.Adam(learning_rate=learning_rate),
+            loss="mean_squared_error",
+            metrics=["accuracy"],
+        )
+        # self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
     
     def fit(self, train_x, train_y, epochs=100):
         assert train_x.shape[0] == train_y.shape[0]

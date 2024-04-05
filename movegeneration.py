@@ -162,14 +162,15 @@ def minimax(
         return 0
 
     if depth == 0:
-        print("agent eval", agent.evaluate_board(board) if agent is not None else None)
+        agent_eval = agent.evaluate_board(board) if agent is not None else None
+        print("agent eval", agent_eval)
         print("mm eval",evaluate_board(board))
         print(board)
         print("Episode: ", episode)
         if numpy.random.rand() <= epsilon:
             return evaluate_board(board)
         else:
-            return evaluate_board(board) if (agent is None or not training) else agent.evaluate_board(board)
+            return evaluate_board(board) if (agent is None or not training) else agent_eval
         
 
     if is_maximising_player:

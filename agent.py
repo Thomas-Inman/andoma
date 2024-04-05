@@ -12,7 +12,7 @@ import movegeneration
 
 
 class DeepQLearning:
-    def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
+    def __init__(self, env:chessenv, inputShape, memorySize, batchSize, gamma, epsilon, epsilonMin, epsilonDecay):
         # Init vals
         
         self.convNet = conv.convNet(inputShape, 16, 3)
@@ -27,7 +27,7 @@ class DeepQLearning:
         self.epsilonDecay = epsilonDecay
         self.env = env
         self.memorySize = memorySize
-        self.batchSize = 32
+        self.batchSize = batchSize
         self.model.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
         self.model.summary()
         self.targetModel.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
@@ -58,7 +58,7 @@ class DeepQLearning:
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1)[0]
-        os.system('cls')
+        # os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -74,8 +74,8 @@ class DeepQLearning:
         for sample in samples:
             state, action, reward, nextState, done, turn = sample
             target = self.model.predict(state, verbose=1)
-            print(state)
-            os.system('cls')
+            # print(state)
+            # os.system('cls')
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
@@ -84,7 +84,7 @@ class DeepQLearning:
                 legalMoves = list(legalMoves)
                 legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
                 Q_future = self.targetModel.predict(nextState, verbose=1)
-                os.system('cls')
+                # os.system('cls')
                 target = [[reward]] + Q_future * self.gamma
                 # print(target.shape)
             try:
@@ -102,7 +102,7 @@ class DeepQLearning:
         v = self.model.predict(state, verbose=1)[0][0]
         os.system('cls')
         # print(self.env.board)
-        return v
+        return v# if board.turn else -v
 
     def load(self, name):
         self.model.load_weights(name)
@@ -125,12 +125,16 @@ class DeepQLearning:
                 nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon, episode)
                 self.env.board.push(nextMove)
                 if self.env.board.is_checkmate():
-                    print("\n\n\nCheckmate for ", "white\n\n\n" if self.env.board.turn else "black\n\n\n")
+                    print(self.env.board)
+                    print("\n\n\nCheckmate for ", "white\n\n\n" if not self.env.board.turn else "black\n\n\n")
                 if self.env.board.is_stalemate():
+                    print(self.env.board)
                     print("\n\n\nStalemate\n\n\n")
                 if self.env.board.is_insufficient_material():
+                    print(self.env.board)
                     print("\n\n\nInsufficient Material\n\n\n")
                 if self.env.board.is_fivefold_repetition():
+                    print(self.env.board)
                     print("\n\n\nFivefold Repetition\n\n\n")
                 if self.env.board.status()!=chess.Status.VALID:
                     print("\n\n\nInvalid\n\n\n")
@@ -153,6 +157,6 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 0.7, 0.9, 0.1, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.1, 0.95)
     dql.train(100) # test with 100 episodes
     
