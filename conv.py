@@ -27,7 +27,7 @@ class convNet:
         x = layers.Dense( boardSize, 'relu')(x) # An array of size convSize * boardSize
         # x = layers.Reshape((76, 8, 8))(x)
         # dot product of x
-        x = layers.Dot(axes=1)([x, x])
+        x = layers.Dense(1)(x)
 
         self.model = models.Model(inputs=board_3d, outputs=x)
         self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')

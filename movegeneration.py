@@ -161,6 +161,9 @@ def minimax(
         return 0
 
     if depth == 0:
+        print("agent eval", agent.evaluate_board(board) if agent is not None else None)
+        print("mm eval",evaluate_board(board))
+
         if numpy.random.rand() <= epsilon:
             return evaluate_board(board)
         else:

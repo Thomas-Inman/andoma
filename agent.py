@@ -15,9 +15,9 @@ class DeepQLearning:
     def __init__(self, env:chessenv, inputShape, memorySize, gamma, epsilon, epsilonMin, epsilonDecay):
         # Init vals
         
-        self.convNet = conv.convNet(inputShape, 8, 3)
+        self.convNet = conv.convNet(inputShape, 16, 3)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 8, 3)
+        self.targetNet = conv.convNet(inputShape, 16, 3)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
