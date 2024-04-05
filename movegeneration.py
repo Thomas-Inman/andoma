@@ -63,7 +63,7 @@ def get_ordered_moves(board: chess.Board) -> List[chess.Move]:
     )
     return list(in_order)
 
-def minimax_root(depth: int, board: chess.Board, training=False, agent=None) -> chess.Move:
+def minimax_root(depth: int, board: chess.Board, training=False, agent=None, episode=0) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -85,7 +85,7 @@ def minimax_root(depth: int, board: chess.Board, training=False, agent=None) -> 
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent, episode)
             # print(value)
         board.pop()
         if maximize and value >= best_move:
@@ -97,7 +97,7 @@ def minimax_root(depth: int, board: chess.Board, training=False, agent=None) -> 
 
     return best_move_found
 
-def minimax_root_with_value(depth: int, board: chess.Board, training=False, agent=None, epsilon=0) -> chess.Move:
+def minimax_root_with_value(depth: int, board: chess.Board, training=False, agent=None, epsilon=0, episode=0) -> chess.Move:
     """
     What is the highest value move per our evaluation function?
     """
@@ -119,7 +119,7 @@ def minimax_root_with_value(depth: int, board: chess.Board, training=False, agen
         if board.can_claim_draw():
             value = 0.0
         else:
-            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent, epsilon)
+            value = minimax(depth - 1, board, -float("inf"), float("inf"), not maximize, training, agent, epsilon, episode)
             # print(value)
         board.pop()
         if maximize and value >= best_move:
@@ -141,7 +141,8 @@ def minimax(
     is_maximising_player: bool,
     training=False,
     agent=None,
-    epsilon=0
+    epsilon=0,
+    episode=0
 ) -> float:
     """
     Core minimax logic.
@@ -164,6 +165,7 @@ def minimax(
         print("agent eval", agent.evaluate_board(board) if agent is not None else None)
         print("mm eval",evaluate_board(board))
         print(board)
+        print("Episode: ", episode)
         if numpy.random.rand() <= epsilon:
             return evaluate_board(board)
         else:
@@ -175,7 +177,7 @@ def minimax(
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon, episode)
             # Each ply after a checkmate is slower, so they get ranked slightly less
             # We want the fastest mate!
             if curr_move > MATE_THRESHOLD:
@@ -196,7 +198,7 @@ def minimax(
         moves = get_ordered_moves(board)
         for move in moves:
             board.push(move)
-            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon)
+            curr_move = minimax(depth - 1, board, alpha, beta, not is_maximising_player, training, agent, epsilon, episode)
             if curr_move > MATE_THRESHOLD:
                 curr_move -= 1
             elif curr_move < -MATE_THRESHOLD:

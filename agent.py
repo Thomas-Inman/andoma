@@ -122,7 +122,7 @@ class DeepQLearning:
                 # nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.board.turn))
                 # print(self.env.board)
                 # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
-                nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon)
+                nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon, episode)
                 self.env.board.push(nextMove)
                 if self.env.board.is_checkmate():
                     print("\n\n\nCheckmate for ", "white\n\n\n" if self.env.board.turn else "black\n\n\n")
