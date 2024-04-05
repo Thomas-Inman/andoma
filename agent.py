@@ -146,13 +146,13 @@ class DeepQLearning:
             print("Finished episode: ", episode)
             if episode % 10 == 0:
                 self.targetModel.set_weights(self.model.get_weights())
-            if episode+1 % 100 == 0:    
-                self.save(self.modelName, self.targetModelName, episode)
+            if (episode+1) % 100 == 0 or episode+1 == episodes:    
+                self.save(self.modelName, self.targetModelName, episode+1)
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.01, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95)
     # dql.train(100) # test with 100 episodes
-    dql.load("checkpoints\\model0.h5", "checkpoints\\targetModel0.h5", 100)
+    dql.load("checkpoints\\model100.h5", "checkpoints\\targetModel100.h5", 100)
     dql.train(1000) # train for 1000 episodes
     
