@@ -30,7 +30,7 @@ class convNet:
         # The curr size of x is (?, convSize, 8, 8)
         x = layers.Flatten()(x)
         for _ in range(3):
-            x = layers.Dense(boardSize*6, "relu",kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize
+            x = layers.Dense(boardSize*6, "relu", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize
         x = layers.Dropout(rate=0.25)(x)
         # x = layers.Reshape((76, 8, 8))(x)
         # dot product of x
@@ -38,7 +38,7 @@ class convNet:
         
         
         self.model = models.Model(inputs=board_3d, outputs=x)
-        learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log") if hp is not None else 5e-4
+        learning_rate = 5e-4
         self.model.compile(
             optimizer=optimizers.AdamW(learning_rate=learning_rate),
             loss="mean_squared_error",

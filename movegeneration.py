@@ -166,7 +166,7 @@ def minimax(
         print("agent eval", agent_eval)
         print("mm eval",evaluate_board(board))
         print(board)
-        print("Episode: ", episode)
+        print("Episode: ", episode, ", Epsilon: ", epsilon)
         if numpy.random.rand() <= epsilon:
             return evaluate_board(board)
         else:
@@ -229,7 +229,11 @@ def act(agent, state, env):
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
         actValues = agent.model.predict(state, verbose=1)[0]
-        # os.system('cls')
+        # if on linux use os.system('clear')
+        # if os.name == 'nt':
+        #     os.system('cls')
+        # elif os.name == 'posix':
+        #     os.system('clear')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if agent.env.get_board().turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])

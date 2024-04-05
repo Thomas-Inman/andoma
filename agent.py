@@ -26,12 +26,13 @@ class DeepQLearning:
         self.epsilonMin = epsilonMin
         self.epsilonDecay = epsilonDecay
         self.env = env
+        self.startEpisode = 0
         self.memorySize = memorySize
         self.batchSize = batchSize
-        self.model.compile(optimizer=optimizers.AdamW(), loss='mean_squared_error')
         self.model.summary()
-        self.targetModel.compile(optimizer=optimizers.AdamW(), loss='mean_squared_error')
         self.targetModel.summary()
+        self.modelName = "model"
+        self.targetModelName = "targetModel"
         
 
     def remember(self, state, action_idx, reward, nextState, done, turn):
@@ -58,12 +59,10 @@ class DeepQLearning:
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1)[0]
-        # os.system('cls')
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
         arr[mx[0]][mx[1]][mx[2]] = 1
-        # print(arr)
         return arr, (mx[0], mx[1], mx[2])
     
     
@@ -72,27 +71,18 @@ class DeepQLearning:
             return
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
-            state, action, reward, nextState, done, turn = sample
+            state, _, reward, nextState, done, _ = sample
             target = self.model.predict(state, verbose=1)
-            # print(state)
-            # os.system('cls')
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
-                # filter legal moves
-                legalMoves = self.env.board.legal_moves
-                legalMoves = list(legalMoves)
-                legalMoves = [env.encode_move(move, True, turn)[1] for move in legalMoves]
                 Q_future = self.targetModel.predict(nextState, verbose=1)
-                # os.system('cls')
                 target = [[reward]] + Q_future * self.gamma
-                # print(target.shape)
             try:
                 self.model.fit(state, target, epochs=1, verbose=1)
             except Exception as e:
                 print(state.shape)
                 print(target)
-                # pass
                 raise e
         if self.epsilon > self.epsilonMin:
             self.epsilon *= self.epsilonDecay
@@ -100,28 +90,35 @@ class DeepQLearning:
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
         v = self.model.predict(state, verbose=1)[0][0]
-        os.system('cls')
-        # print(self.env.board)
-        return v# if board.turn else -v
+        # if on linux use os.system('clear')
+        if os.name == 'nt':
+            os.system('cls')
+        elif os.name == 'posix':
+            os.system('clear')
+        return v
 
-    def load(self, name):
-        self.model.load_weights(name)
-        self.targetModel.load_weights(name)
+    def load(self, model_name, target_model_name, start_episode = 0):
+        self.model.load_weights(model_name)
+        self.targetModel.load_weights(target_model_name)
+        # start episode from where we left off, only used for training
+        self.startEpisode = start_episode
+
+    def save(self, model_name, target_model_name, episode = 0):
+        self.model.save(model_name+str(episode)+".h5")
+        self.targetModel.save(target_model_name+str(episode)+".h5")
 
     def train(self, episodes):
+        assert self.startEpisode < episodes
+        self.epsilon = max(self.epsilonMin, self.epsilon * (self.epsilonDecay ** self.startEpisode))
         for episode in range(episodes):
+            episode += self.startEpisode
+            # skip episodes if we are loading from a checkpoint
             print("Episode: ", episode)
             state = self.env.reset()
             state = numpy.reshape(state, [1, 12, 8, 8])
             done = False
             valid = True
             while (not done) and valid:
-                # action, action_idx = self.act(state)
-                # print(action)
-                # print("!!!!!!!!!")
-                # nextState, reward, done, valid = self.env.step(self.env.decode_move(action, self.env.board.turn))
-                # print(self.env.board)
-                # reward = movegeneration.minimax(3, self.env.board, -float("inf"), float("inf"), self.env.board.turn, self)
                 nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon, episode)
                 self.env.board.push(nextMove)
                 if self.env.board.is_checkmate():
@@ -140,23 +137,22 @@ class DeepQLearning:
                     print("\n\n\nInvalid\n\n\n")
                 done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
                 valid = self.env.board.status() == chess.Status.VALID
-                # print(self.env.board.turn)
-                # print(valid)
                 nextState = self.env.get_bitboard(self.env.board)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 turn = self.env.board.turn
-                self.remember(state, self.env.encode_move(nextMove, True, self.env.board.turn)[1], reward, nextState, done, turn)
+                self.remember(state, None, reward, nextState, done, turn)
                 state = nextState
             self.replay()
             print("Finished episode: ", episode)
             if episode % 10 == 0:
                 self.targetModel.set_weights(self.model.get_weights())
-                
-        self.model.save("model.h5")
-        self.targetModel.save("targetModel.h5")
+            if episode+1 % 100 == 0:    
+                self.save(self.modelName, self.targetModelName, episode)
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.1, 0.95)
-    dql.train(100) # test with 100 episodes
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.01, 0.95)
+    # dql.train(100) # test with 100 episodes
+    dql.load("checkpoints\\model0.h5", "checkpoints\\targetModel0.h5", 100)
+    dql.train(1000) # train for 1000 episodes
     
