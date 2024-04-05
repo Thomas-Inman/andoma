@@ -40,7 +40,7 @@ class convNet:
         self.model = models.Model(inputs=board_3d, outputs=x)
         learning_rate = hp.Float("lr", min_value=1e-4, max_value=1e-2, sampling="log") if hp is not None else 5e-4
         self.model.compile(
-            optimizer=optimizers.Adam(learning_rate=learning_rate),
+            optimizer=optimizers.AdamW(learning_rate=learning_rate),
             loss="mean_squared_error",
             metrics=["accuracy"],
         )

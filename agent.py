@@ -28,9 +28,9 @@ class DeepQLearning:
         self.env = env
         self.memorySize = memorySize
         self.batchSize = batchSize
-        self.model.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
+        self.model.compile(optimizer=optimizers.AdamW(), loss='mean_squared_error')
         self.model.summary()
-        self.targetModel.compile(optimizer=optimizers.Adam(), loss='mean_squared_error')
+        self.targetModel.compile(optimizer=optimizers.AdamW(), loss='mean_squared_error')
         self.targetModel.summary()
         
 
