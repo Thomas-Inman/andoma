@@ -43,11 +43,19 @@ def start_with_agent():
     if user_side == chess.WHITE:
         print(render(board))
         board.push(get_move(board))
+        # board.push(next_move(1, board, debug=False))
 
     while not board.is_game_over():
-        board.push(next_move_agent(1, board, debug=False, agent=dql))
+        board.push(next_move_agent(2, board, debug=False, agent=dql))
         print(render(board))
-        board.push(get_move(board))
+        try:
+            board.push(get_move(board))
+        except:
+            break
+        # try:
+        #     board.push(next_move(1, board, debug=False))
+        # except:
+        #     break
 
     print(f"\nResult: [w] {board.result()} [b]")
 

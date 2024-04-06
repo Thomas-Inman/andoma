@@ -1,10 +1,8 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 import tensorflow.keras.models as models
 import tensorflow.keras.layers as layers
 import tensorflow.keras.optimizers as optimizers
 from tensorflow.keras.regularizers import l2
-# import keras_tuner
 
 
 class convNet:
@@ -32,8 +30,6 @@ class convNet:
         for _ in range(3):
             x = layers.Dense(boardSize*6, "relu", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize
         x = layers.Dropout(rate=0.25)(x)
-        # x = layers.Reshape((76, 8, 8))(x)
-        # dot product of x
         x = layers.Dense(1)(x)
         
         
@@ -44,7 +40,7 @@ class convNet:
             loss="mean_squared_error",
             metrics=["accuracy"],
         )
-        # self.model.compile(optimizer = optimizers.Adam(5e-4), loss='mean_squared_error')
+        
     
     def fit(self, train_x, train_y, epochs=100):
         assert train_x.shape[0] == train_y.shape[0]
@@ -55,21 +51,11 @@ class convNet:
         print(board.shape)
         return self.model.predict(board)
     
-
-# net = convNet((8, 8, 14), 76, 3)
-# print(net.model.summary())
-
-# train_x = np.random.uniform(0, 1, size=(100, 8, 8, 14))
-# train_y = np.random.uniform(0, 1, size=(100, 76*8*8))
-# print("x: " + str(train_x.shape))
-# print("Y: " + str(train_y.shape))
-# net.fit(train_x, train_y, epochs=5)
-# print(net.forward(np.random.uniform(1, 2, size=(8, 8, 14))))
     
 if __name__ == '__main__':
     net = convNet((12,8,8), 32, 2)
     model = net.model
     model.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
     model.summary()
-    # utils.plot_model(model, to_file='model.png', show_shapes=True)
+    
     

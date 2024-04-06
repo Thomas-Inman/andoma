@@ -4,7 +4,6 @@ import time
 from evaluate import evaluate_board, move_value, check_end_game
 import numpy
 import random
-import os
 
 
 debug_info: Dict[str, Any] = {}
@@ -23,6 +22,7 @@ def next_move(depth: int, board: chess.Board, debug=True) -> chess.Move:
     t0 = time.time()
 
     move = minimax_root(depth, board)
+    assert board.is_legal(move)
 
     debug_info["time"] = time.time() - t0
     if debug == True:
@@ -38,6 +38,7 @@ def next_move_agent(depth: int, board: chess.Board, debug=True, agent=None) -> c
     t0 = time.time()
 
     move = minimax_root(depth, board, False, agent)
+    assert board.is_legal(move)
 
     debug_info["time"] = time.time() - t0
     if debug == True:
@@ -158,7 +159,7 @@ def minimax(
         return -MATE_SCORE if is_maximising_player else MATE_SCORE
     # When the game is over and it's not a checkmate it's a draw
     # In this case, don't evaluate. Just return a neutral result: zero
-    elif board.is_game_over():
+    elif board.is_game_over() or board.is_stalemate() or board.is_insufficient_material() or board.is_fivefold_repetition():
         return 0
 
     if depth == 0:
