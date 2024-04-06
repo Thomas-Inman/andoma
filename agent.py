@@ -155,6 +155,9 @@ if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95)
     # dql.train(100) # test with 100 episodes
-    dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5", 500)
+    if os.name == 'nt':
+        dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5", 500)
+    else:
+        dql.load("checkpoints/model500.h5", "checkpoints/targetModel500.h5", 500)
     dql.train(1000) # train for 1000 episodes
     

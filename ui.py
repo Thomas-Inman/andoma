@@ -5,6 +5,7 @@ import argparse
 from movegeneration import next_move, next_move_agent
 import chessenv
 from agent import DeepQLearning
+import os
 
 
 def start():
@@ -38,7 +39,10 @@ def start_with_agent():
     )
     env = chessenv.chessEnv(chess.Board())
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False)
-    dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
+    if os.name == 'nt':
+        dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
+    else:
+        dql.load("checkpoints/model500.h5", "checkpoints/targetModel500.h5")
 
     if user_side == chess.WHITE:
         print(render(board))
