@@ -12,7 +12,7 @@ import movegeneration
 
 
 class DeepQLearning:
-    def __init__(self, env:chessenv, inputShape, memorySize, batchSize, gamma, epsilon, epsilonMin, epsilonDecay):
+    def __init__(self, env:chessenv, inputShape, memorySize, batchSize, gamma, epsilon, epsilonMin, epsilonDecay, training = True):
         # Init vals
         
         self.convNet = conv.convNet(inputShape, 16, 3)
@@ -33,6 +33,7 @@ class DeepQLearning:
         self.targetModel.summary()
         self.modelName = "model"
         self.targetModelName = "targetModel"
+        self.training = training
         
 
     def remember(self, state, action_idx, reward, nextState, done, turn):
@@ -58,7 +59,7 @@ class DeepQLearning:
         legalMoves = self.env.board.legal_moves
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
-        actValues = self.model.predict(state, verbose=1)[0]
+        actValues = self.model.predict(state, verbose=1 if self.training else 0)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
         arr = numpy.zeros(shape=[76, 8, 8])
@@ -72,14 +73,14 @@ class DeepQLearning:
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
             state, _, reward, nextState, done, _ = sample
-            target = self.model.predict(state, verbose=1)
+            target = self.model.predict(state, verbose=1 if self.training else 0)
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
-                Q_future = self.targetModel.predict(nextState, verbose=1)
+                Q_future = self.targetModel.predict(nextState, verbose=1 if self.training else 0)
                 target = [[reward]] + Q_future * self.gamma
             try:
-                self.model.fit(state, target, epochs=1, verbose=1)
+                self.model.fit(state, target, epochs=1, verbose=1 if self.training else 0)
             except Exception as e:
                 print(state.shape)
                 print(target)
@@ -89,12 +90,13 @@ class DeepQLearning:
 
     def evaluate_board(self, board):
         state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
-        v = self.model.predict(state, verbose=1)[0][0]
+        v = self.model.predict(state, verbose=1 if self.training else 0)[0][0]
         # if on linux use os.system('clear')
-        if os.name == 'nt':
-            os.system('cls')
-        elif os.name == 'posix':
-            os.system('clear')
+        if self.training:
+            if os.name == 'nt':
+                os.system('cls')
+            elif os.name == 'posix':
+                os.system('clear')
         return v
 
     def load(self, model_name, target_model_name, start_episode = 0):

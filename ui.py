@@ -37,7 +37,7 @@ def start_with_agent():
         chess.WHITE if input("Start as [w]hite or [b]lack:\n") == "w" else chess.BLACK
     )
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95)
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False)
     dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
 
     if user_side == chess.WHITE:
@@ -45,7 +45,7 @@ def start_with_agent():
         board.push(get_move(board))
 
     while not board.is_game_over():
-        board.push(next_move_agent(get_depth(), board, debug=False, agent=dql))
+        board.push(next_move_agent(2, board, debug=False, agent=dql))
         print(render(board))
         board.push(get_move(board))
 

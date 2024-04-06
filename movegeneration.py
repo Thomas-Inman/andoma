@@ -163,10 +163,11 @@ def minimax(
 
     if depth == 0:
         agent_eval = agent.evaluate_board(board) if agent is not None else None
-        print("agent eval", agent_eval)
-        print("mm eval",evaluate_board(board))
-        print(board)
-        print("Episode: ", episode, ", Epsilon: ", epsilon)
+        if training:
+            print("agent eval", agent_eval)
+            print("mm eval",evaluate_board(board))
+            print(board)
+            print("Episode: ", episode, ", Epsilon: ", epsilon)
         if numpy.random.rand() <= epsilon:
             return evaluate_board(board)
         else:
@@ -228,7 +229,7 @@ def act(agent, state, env):
         legalMoves = agent.env.get_board().legal_moves
         legalMoves = list(legalMoves)
         legalMoves = [env.encode_move(move, True, agent.env.get_board().turn)[1] for move in legalMoves]
-        actValues = agent.model.predict(state, verbose=1)[0]
+        actValues = agent.model.predict(state, verbose=0)[0]
         # if on linux use os.system('clear')
         # if os.name == 'nt':
         #     os.system('cls')
