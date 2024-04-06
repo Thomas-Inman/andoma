@@ -38,7 +38,7 @@ def start_with_agent():
     )
     env = chessenv.chessEnv(chess.Board())
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95)
-    dql.load("model.h5", "targetModel.h5")
+    dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
 
     if user_side == chess.WHITE:
         print(render(board))
