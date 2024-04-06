@@ -45,7 +45,7 @@ def start_with_agent():
         board.push(get_move(board))
 
     while not board.is_game_over():
-        board.push(next_move_agent(2, board, debug=False, agent=dql))
+        board.push(next_move_agent(1, board, debug=False, agent=dql))
         print(render(board))
         board.push(get_move(board))
 
