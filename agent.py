@@ -26,13 +26,13 @@ class DeepQLearning:
         self.epsilonMin = epsilonMin
         self.epsilonDecay = epsilonDecay
         self.env = env
-        self.startEpisode = 0
+        # self.startEpisode = 0
         self.memorySize = memorySize
         self.batchSize = batchSize
         self.model.summary()
         self.targetModel.summary()
-        self.modelName = "model"
-        self.targetModelName = "targetModel"
+        self.modelName = "2_model"
+        self.targetModelName = "2_targetModel"
         self.training = training
         
 
@@ -73,7 +73,7 @@ class DeepQLearning:
         samples = random.sample(self.memory, self.batchSize)
         for sample in samples:
             state, _, reward, nextState, done, _ = sample
-            target = self.model.predict(state, verbose=1 if self.training else 0)
+            # target = self.model.predict(state, verbose=1 if self.training else 0)
             if done:
                 target:numpy.ndarray = numpy.array([[reward]])
             else:
@@ -112,6 +112,7 @@ class DeepQLearning:
     def train(self, episodes):
         assert self.startEpisode < episodes
         self.epsilon = max(self.epsilonMin, self.epsilon * (self.epsilonDecay ** self.startEpisode))
+        print(self.startEpisode, self.epsilon)
         for episode in range(episodes):
             episode += self.startEpisode
             # skip episodes if we are loading from a checkpoint
@@ -153,11 +154,12 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95)
-    # dql.train(100) # test with 100 episodes
+    # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.5
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.25
+    
     if os.name == 'nt':
-        dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5", 500)
+        dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
     else:
-        dql.load("checkpoints/model500.h5", "checkpoints/targetModel500.h5", 500)
+        dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
     dql.train(1000) # train for 1000 episodes
     

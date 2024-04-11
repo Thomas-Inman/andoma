@@ -1,8 +1,13 @@
 import sys
 import chess
 import argparse
-from movegeneration import next_move
+from movegeneration import next_move, next_move_agent
+from agent import DeepQLearning
+import os
+import chessenv
 
+env = None
+dql = None
 
 def talk():
     """
@@ -69,9 +74,19 @@ def command(depth: int, board: chess.Board, msg: str):
         # Non-standard command, but supported by Stockfish and helps debugging
         print(board)
         print(board.fen())
+    
+    if env is None:
+        env = chessenv.chessEnv(board)
+
+    if dql is None:
+        dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False)
+    if os.name == 'nt':
+        dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
+    else:
+        dql.load("checkpoints/model500.h5", "checkpoints/targetModel500.h5")
 
     if msg[0:2] == "go":
-        _move = next_move(depth, board)
+        _move = next_move_agent(depth, board, dql)
         print(f"bestmove {_move}")
         return
 
