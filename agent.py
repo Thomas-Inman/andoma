@@ -3,7 +3,9 @@ import random
 import chess
 import conv
 import chessenv
+import chessenvPGN
 import os
+from pathlib import Path
 import tensorflow.keras.optimizers as optimizers
 import tensorflow
 tensorflow.get_logger().setLevel('ERROR')
@@ -26,7 +28,7 @@ class DeepQLearning:
         self.epsilonMin = epsilonMin
         self.epsilonDecay = epsilonDecay
         self.env = env
-        # self.startEpisode = 0
+        self.startEpisode = 0
         self.memorySize = memorySize
         self.batchSize = batchSize
         self.model.summary()
@@ -58,7 +60,7 @@ class DeepQLearning:
         # filter legal moves
         legalMoves = self.env.board.legal_moves
         legalMoves = list(legalMoves)
-        legalMoves = [env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
+        legalMoves = [self.env.encode_move(move, True, self.env.board.turn)[1] for move in legalMoves]
         actValues = self.model.predict(state, verbose=1 if self.training else 0)[0]
         actValues = [actValues[move] for move in legalMoves]
         mx = legalMoves[numpy.argmax(actValues) if self.env.board.turn else numpy.argmin(actValues)]
@@ -89,7 +91,7 @@ class DeepQLearning:
             self.epsilon *= self.epsilonDecay
 
     def evaluate_board(self, board):
-        state = numpy.reshape(self.env.get_bitboard(board), [1, 12, 8, 8])
+        state = numpy.reshape(chessenv.get_bitboard(board), [1, 12, 8, 8])
         v = self.model.predict(state, verbose=1 if self.training else 0)[0][0]
         # if on linux use os.system('clear')
         if self.training:
@@ -140,7 +142,7 @@ class DeepQLearning:
                     print("\n\n\nInvalid\n\n\n")
                 done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
                 valid = self.env.board.status() == chess.Status.VALID
-                nextState = self.env.get_bitboard(self.env.board)
+                nextState = chessenv.get_bitboard(self.env.board)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
                 turn = self.env.board.turn
                 self.remember(state, None, reward, nextState, done, turn)
@@ -154,12 +156,13 @@ class DeepQLearning:
 
 if __name__ == '__main__':
     env = chessenv.chessEnv(chess.Board())
+    # env = chessenvPGN.chessEnvPGN(chess.Board(),  str(Path("PGN","Abdusattorov.pgn")))
     # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.5
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.25
     
-    if os.name == 'nt':
-        dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
-    else:
-        dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
+    # if os.name == 'nt':
+    #     dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
+    # else:
+    #     dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
     dql.train(1000) # train for 1000 episodes
     
