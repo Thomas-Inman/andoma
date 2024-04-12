@@ -21,7 +21,7 @@ class chessEnv:
         # self.board.pop()
         if self.board.is_checkmate():
             print("\n\n\nCheckmate for ", "white\n\n\n" if self.board.turn else "black\n\n\n")
-            eval = 10000 if self.board.turn else -10000
+            eval = 1000000000000000 if self.board.turn else -1000000000000000
         if self.board.is_stalemate():
             print("\n\n\nStalemate\n\n\n")
             eval = 0

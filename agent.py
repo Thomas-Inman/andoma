@@ -160,9 +160,9 @@ if __name__ == '__main__':
     # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.5
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.25
     
-    # if os.name == 'nt':
-    #     dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
-    # else:
-    #     dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
+    if os.name == 'nt':
+        dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
+    else:
+        dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
     dql.train(1000) # train for 1000 episodes
     
