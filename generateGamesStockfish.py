@@ -8,7 +8,10 @@ from agent import DeepQLearning
 import os
 import numpy as np
 from fish import Fish
-PATH = "/mnt/c/Users/thoma/classwork/comp 579/project/andoma/"
+from pathlib import Path
+
+# get working dir using pathlib
+PATH = str(Path(__file__).parent.absolute())
 
 
 def runGame(board, dql, Fish):
@@ -30,13 +33,16 @@ def runGame(board, dql, Fish):
     if fishSide == chess.WHITE:
         #print(render(board))
         board.push_san(get_move(board, Fish))
+        print(board)
         # board.push(next_move(1, board, debug=False))
     i = 0
     while not board.is_game_over():
         print(i)
         i+= 1
         board.push(next_move_agent(2, board, debug=False, agent=dql))
-        #print(render(board))
+        print(board)
+        if board.is_game_over():
+            break
         try:
             board.push_san(get_move(board, Fish))
         except:
@@ -69,14 +75,25 @@ if __name__ == "__main__":
     board.reset()
     env = chessenv.chessEnv(chess.Board())
     
-    modelName, targetModelName = "checkpoints/3_model400.h5", "checkpoints/3_targetModel400.h5"
+    # Load model
+    if os.name == 'nt':
+        modelName, targetModelName = f"checkpoints\\3_model400.h5", f"checkpoints\\s3_targetModel400.h5"
+    else:
+        modelName, targetModelName = "checkpoints/3_model400.h5", "checkpoints/3_targetModel400.h5"
     # init dqn
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False)
     if os.name == 'nt':
-        dql.load("checkpoints\\model500.h5", "checkpoints\\targetModel500.h5")
+        dql.load(f"checkpoints\\model500.h5", f"checkpoints\\targetModel500.h5")
+        try:
+            f = open(PATH + f"\\results\\4_300_res.csv", 'a')
+        except FileNotFoundError:
+            f = open(PATH + f"\\results\\4_300_res.csv", 'w')
     else:
         dql.load(PATH + modelName, PATH + targetModelName)
-    f = open(PATH + "results/4_300_res.csv", 'a')
+        try:
+            f = open(PATH + f"/results/4_300_res.csv", 'a')
+        except FileNotFoundError:
+            f = open(PATH + f"/results/4_300_res.csv", 'w')
     for i in range(5):
         board.reset()
         

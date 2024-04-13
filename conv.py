@@ -6,17 +6,17 @@ from tensorflow.keras.regularizers import l2
 
 
 class convNet:
-    def __init__(self, inputShape, convSize, convDepth):
+    def __init__(self, inputShape, convSize, convDepth, norm=False):
         #@Param inputShape : the shape of thew observation -> transformed board state
         #@param convSize : the size of the filter (will be the outputy size)
         #@param convDepth : Number of Convolution layers in the model
         self.inputShape = inputShape
-        self.buildConvNet(convSize, convDepth)
+        self.buildConvNet(convSize, convDepth, norm)
         
-    def buildConvNet(self, convSize, convDepth, hp=None):
+    def buildConvNet(self, convSize, convDepth, norm=False):
         #@param convSize : the size of the filter (will be the outputy size)
         #@param convDepth : Number of Convolution layers in the model
-        #@param hp : Hyperparameters for the model
+        #@param norm : normalize layer
         # Define input layers
         board_3d = layers.Input(shape=self.inputShape)
         boardSize = 8*8
@@ -26,7 +26,8 @@ class convNet:
         for _ in range(convDepth):
             x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x)
         # batch normalization
-        x = layers.BatchNormalization()(x)
+        if norm:
+            x = layers.BatchNormalization()(x)
         x = layers.Flatten()(x)
         for _ in range(3):
             x = layers.Dense(boardSize*6, "relu", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize

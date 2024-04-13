@@ -14,12 +14,12 @@ import movegeneration
 
 
 class DeepQLearning:
-    def __init__(self, env:chessenv, inputShape, memorySize, batchSize, gamma, epsilon, epsilonMin, epsilonDecay, training = True):
+    def __init__(self, env:chessenv, inputShape, memorySize, batchSize, gamma, epsilon, epsilonMin, epsilonDecay, training = True, normalize = False):
         # Init vals
         
-        self.convNet = conv.convNet(inputShape, 16, 3)
+        self.convNet = conv.convNet(inputShape, 16, 3, norm = normalize)
         self.model = self.convNet.model
-        self.targetNet = conv.convNet(inputShape, 16, 3)
+        self.targetNet = conv.convNet(inputShape, 16, 3, norm = normalize)
         self.targetModel = self.targetNet.model
         self.targetModel.set_weights(self.model.get_weights())
         self.memory = []
@@ -162,8 +162,9 @@ class DeepQLearning:
 if __name__ == '__main__':
     # env = chessenv.chessEnv(chess.Board())
     env = chessenvPGN.chessEnvPGN(chess.Board(),  str(Path("PGN","Abdusattorov.pgn")))
-    # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.5
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.25
+    # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95, False) # test with 500 memory size and alpha = 0.5 without normalization layer
+    # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95, training=True, normalize=False) # test with 500 memory size and alpha = 0.25 without normalization layer
+    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95, training=True, normalize=True) # test with 500 memory size and alpha = 0.25 with normalization layer
     
     # if os.name == 'nt':
     #     dql.load("checkpoints\\2_model500.h5", "checkpoints\\2_targetModel500.h5", 500)

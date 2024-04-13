@@ -72,7 +72,7 @@ class chessEnvPGN(chessenv.chessEnv):
         return move, self.__eval__(board, board.turn==chess.WHITE, agent_eval)
 
     def __eval__(self, board: chess.Board, is_maximising_player: bool, agent_eval=None) -> float:
-        MATE_SCORE     = 10000
+        MATE_SCORE  = 10000
         if board.is_checkmate():
         # The previous move resulted in checkmate
             return -MATE_SCORE if is_maximising_player else MATE_SCORE
