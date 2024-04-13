@@ -25,7 +25,8 @@ class convNet:
         x = board_3d
         for _ in range(convDepth):
             x = layers.Conv2D(filters=convSize, kernel_size=3, padding='same', activation='relu', data_format="channels_last", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x)
-        # The curr size of x is (?, convSize, 8, 8)
+        # batch normalization
+        x = layers.BatchNormalization()(x)
         x = layers.Flatten()(x)
         for _ in range(3):
             x = layers.Dense(boardSize*6, "relu", kernel_regularizer=l2(0.01), bias_regularizer=l2(0.01))(x) # An array of size convSize * boardSize
@@ -38,7 +39,6 @@ class convNet:
         self.model.compile(
             optimizer=optimizers.AdamW(learning_rate=learning_rate),
             loss="mean_squared_error",
-            metrics=["accuracy"],
         )
         
     
@@ -52,10 +52,5 @@ class convNet:
         return self.model.predict(board)
     
     
-if __name__ == '__main__':
-    net = convNet((12,8,8), 32, 2)
-    model = net.model
-    model.compile(optimizer=optimizers.Adam(), loss='binary_crossentropy')
-    model.summary()
     
     

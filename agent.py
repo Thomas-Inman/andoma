@@ -33,8 +33,8 @@ class DeepQLearning:
         self.batchSize = batchSize
         self.model.summary()
         self.targetModel.summary()
-        self.modelName = "2_model"
-        self.targetModelName = "2_targetModel"
+        self.modelName = "3_model"
+        self.targetModelName = "3_targetModel" # 3_model and 3_targetModel are for irl data
         self.training = training
         
 
@@ -124,8 +124,13 @@ class DeepQLearning:
             done = False
             valid = True
             while (not done) and valid:
-                nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon, episode)
-                self.env.board.push(nextMove)
+                # nextMove, reward = movegeneration.minimax_root_with_value(1, self.env.board, True, self, self.epsilon, episode)
+                nextMove, reward = self.env.next_move(1, self.env.board, True, self, self.epsilon, episode)
+                if nextMove is not None:
+                    try:
+                        self.env.board.push(nextMove)
+                    except:
+                        nextMove = None
                 if self.env.board.is_checkmate():
                     print(self.env.board)
                     print("\n\n\nCheckmate for ", "white\n\n\n" if not self.env.board.turn else "black\n\n\n")
@@ -140,7 +145,7 @@ class DeepQLearning:
                     print("\n\n\nFivefold Repetition\n\n\n")
                 if self.env.board.status()!=chess.Status.VALID:
                     print("\n\n\nInvalid\n\n\n")
-                done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate()
+                done = self.env.board.is_game_over() or self.env.board.is_stalemate() or self.env.board.is_insufficient_material() or self.env.board.is_checkmate() or nextMove is None
                 valid = self.env.board.status() == chess.Status.VALID
                 nextState = chessenv.get_bitboard(self.env.board)
                 nextState = numpy.reshape(nextState, [1, 12, 8, 8])
@@ -155,14 +160,14 @@ class DeepQLearning:
                 self.save(self.modelName, self.targetModelName, episode+1)
 
 if __name__ == '__main__':
-    env = chessenv.chessEnv(chess.Board())
-    # env = chessenvPGN.chessEnvPGN(chess.Board(),  str(Path("PGN","Abdusattorov.pgn")))
+    # env = chessenv.chessEnv(chess.Board())
+    env = chessenvPGN.chessEnvPGN(chess.Board(),  str(Path("PGN","Abdusattorov.pgn")))
     # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.5, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.5
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95) # test with 500 memory size and alpha = 0.25
     
-    if os.name == 'nt':
-        dql.load("checkpoints\\2_model100.h5", "checkpoints\\2_targetModel100.h5", 100)
-    else:
-        dql.load("checkpoints/2_model100.h5", "checkpoints/2_targetModel100.h5", 100)
+    # if os.name == 'nt':
+    #     dql.load("checkpoints\\2_model500.h5", "checkpoints\\2_targetModel500.h5", 500)
+    # else:
+    #     dql.load("checkpoints/2_model500.h5", "checkpoints/2_targetModel500.h5", 500)
     dql.train(1000) # train for 1000 episodes
     

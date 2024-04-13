@@ -3,7 +3,7 @@ import chess
 from chess import pgn
 import numpy
 from typing import Union
-import math
+import movegeneration
 import evaluate
 
 class chessEnvPGN(chessenv.chessEnv):
@@ -49,7 +49,37 @@ class chessEnvPGN(chessenv.chessEnv):
         return self.board
     
     def next_move(self, depth: int, board: chess.Board, training=False, agent=None, epsilon=0, episode=0):
-        move = self.game.mainline_moves()[self.current_index_ingame]
+        # print(list(self.game.mainline_moves()))
+        # print(self.current_index_ingame)
+        MATE_SCORE     = 10000
+        try:
+            move = list(self.game.mainline_moves())[self.current_index_ingame]
+            # print(move)
+        except IndexError as e:
+            print(e)
+            print("End of game reached")
+            self.current_index_ingame = 0
+            result = self.game.headers["Result"] if "Result" in self.game.headers else "1/2-1/2"
+            result = MATE_SCORE if result == "1-0" else -MATE_SCORE if result == "0-1" else 0
+            return None, result
         self.current_index_ingame += 1
-        return move
+        agent_eval = agent.evaluate_board(board) if agent is not None else None
+        if training:
+            print("agent eval", agent_eval)
+            print("mm eval",self.__eval__(board, board.turn==chess.WHITE))
+            print(board)
+            print("Episode: ", episode, ", Epsilon: ", epsilon)
+        return move, self.__eval__(board, board.turn==chess.WHITE, agent_eval)
+
+    def __eval__(self, board: chess.Board, is_maximising_player: bool, agent_eval=None) -> float:
+        MATE_SCORE     = 10000
+        if board.is_checkmate():
+        # The previous move resulted in checkmate
+            return -MATE_SCORE if is_maximising_player else MATE_SCORE
+        # When the game is over and it's not a checkmate it's a draw
+        # In this case, don't evaluate. Just return a neutral result: zero
+        elif board.is_game_over() or board.is_stalemate() or board.is_insufficient_material() or board.is_fivefold_repetition():
+            return 0
+        else:
+            return agent_eval if agent_eval is not None else movegeneration.evaluate_board(board)
     
