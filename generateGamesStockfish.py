@@ -118,7 +118,7 @@ if __name__ == "__main__":
     if os.name == 'nt':
         modelName, targetModelName = f"checkpoints\\5_model500.h5", f"checkpoints\\5_targetModel500.h5"
     else:
-        modelName, targetModelName = "checkpoints/3_model400.h5", "checkpoints/3_targetModel400.h5"
+        modelName, targetModelName = "/checkpoints/4_model300.h5", "/checkpoints/4_targetModel300.h5"
     # init dqn
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False, True)
     if os.name == 'nt':
@@ -156,7 +156,8 @@ if __name__ == "__main__":
     if os.name == 'nt':
         modelName, targetModelName = f"checkpoints\\2_model500.h5", f"checkpoints\\2_targetModel500.h5"
     else:
-        modelName, targetModelName = "checkpoints/3_model400.h5", "checkpoints/3_targetModel400.h5"
+        # modelName, targetModelName = "checkpoints/3_model400.h5", "checkpoints/3_targetModel400.h5"
+        modelName, targetModelName = "/checkpoints/model500.h5", "/checkpoints/targetModel500.h5"
     # init dqn
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False, False)
     if os.name == 'nt':
@@ -168,9 +169,9 @@ if __name__ == "__main__":
     else:
         dql.load(PATH + modelName, PATH + targetModelName)
         try:
-            f = open(PATH + f"/results/4_300_res.csv", 'a')
+            f = open(PATH + f"/results/1_500_res.csv", 'a')
         except FileNotFoundError:
-            f = open(PATH + f"/results/4_300_res.csv", 'w')
+            f = open(PATH + f"/results/1_500_res.csv", 'w')
     for i in range(20):
         board.reset()
         
