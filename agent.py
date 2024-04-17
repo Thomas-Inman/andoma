@@ -166,7 +166,6 @@ if __name__ == '__main__':
     # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95, training=True, normalize=False) # test with 500 memory size and gamma = 0.25 without normalization layer 2_model and 2_targetModel, self play data
     # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.25, .95, 0.2, 0.95, training=True, normalize=True) # test with 500 memory size and gamma = 0.25 with normalization layer 4_model and 4_targetModel, self play data
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.125, .95, 0.2, 0.95, training=True, normalize=True) # test with 500 memory size and gamma = 0.125 with normalization layer 5_model and 5_targetModel, self play data
-    
     # if os.name == 'nt':
     #     dql.load("checkpoints\\2_model500.h5", "checkpoints\\2_targetModel500.h5", 500)
     # else:

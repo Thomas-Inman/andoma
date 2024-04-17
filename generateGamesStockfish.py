@@ -9,7 +9,7 @@ import os
 import numpy as np
 from fish import Fish
 from pathlib import Path
-
+from tensorflow.keras.utils import plot_model
 # get working dir using pathlib
 PATH = str(Path(__file__).parent.absolute())
 
@@ -82,6 +82,9 @@ if __name__ == "__main__":
         modelName, targetModelName = "/checkpoints/3_model300.h5", "/checkpoints/3_targetModel300.h5"
     # init dqn
     dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False, True)
+    # plot_model(dql.model, to_file="model.png", show_shapes=True)
+    # plot_model(dql.targetModel, to_file="model2.png", show_shapes=True)
+    # exit()
     if os.name == 'nt':
         dql.load(modelName, targetModelName)
         try:
