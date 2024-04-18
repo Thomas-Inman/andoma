@@ -71,45 +71,45 @@ def get_depth() -> int:
 
 if __name__ == "__main__":
         # Initialize game board and env
-    board = chess.Board()
-    board.reset()
-    env = chessenv.chessEnv(chess.Board())
+    # board = chess.Board()
+    # board.reset()
+    # env = chessenv.chessEnv(chess.Board())
     
-    # Load model
-    if os.name == 'nt':
-        modelName, targetModelName = f"checkpoints\\3_model400.h5", f"checkpoints\\3_targetModel400.h5"
-    else:
-        modelName, targetModelName = "/checkpoints/3_model300.h5", "/checkpoints/3_targetModel300.h5"
-    # init dqn
-    dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False, True)
-    # plot_model(dql.model, to_file="model.png", show_shapes=True)
-    # plot_model(dql.targetModel, to_file="model2.png", show_shapes=True)
-    # exit()
-    if os.name == 'nt':
-        dql.load(modelName, targetModelName)
-        try:
-            f = open(PATH + f"\\results\\3_400_res.csv", 'a')
-        except FileNotFoundError:
-            f = open(PATH + f"\\results\\3_400_res.csv", 'w')
-    else:
-        dql.load(PATH + modelName, PATH + targetModelName)
-        try:
-            f = open(PATH + f"/results/3_300_res.csv", 'a')
-        except FileNotFoundError:
-            f = open(PATH + f"/results/3_300_res.csv", 'w')
-    for i in range(20):
-        board.reset()
+    # # Load model
+    # if os.name == 'nt':
+    #     modelName, targetModelName = f"checkpoints\\3_model400.h5", f"checkpoints\\3_targetModel400.h5"
+    # else:
+    #     modelName, targetModelName = "/checkpoints/3_model300.h5", "/checkpoints/3_targetModel300.h5"
+    # # init dqn
+    # dql = DeepQLearning(env, (12, 8, 8), 500, 64, 0.7, 0.9, 0.1, 0.95, False, True)
+    # # plot_model(dql.model, to_file="model.png", show_shapes=True)
+    # # plot_model(dql.targetModel, to_file="model2.png", show_shapes=True)
+    # # exit()
+    # if os.name == 'nt':
+    #     dql.load(modelName, targetModelName)
+    #     try:
+    #         f = open(PATH + f"\\results\\3_400_res.csv", 'a')
+    #     except FileNotFoundError:
+    #         f = open(PATH + f"\\results\\3_400_res.csv", 'w')
+    # else:
+    #     dql.load(PATH + modelName, PATH + targetModelName)
+    #     try:
+    #         f = open(PATH + f"/results/3_300_res.csv", 'a')
+    #     except FileNotFoundError:
+    #         f = open(PATH + f"/results/3_300_res.csv", 'w')
+    # for i in range(20):
+    #     board.reset()
         
-        #f.write("fishStart, w, b\n")
-        try:
-            fish = Fish()
-            fishStart, res = runGame(board, dql, fish)
-            print("game: " + str(i) + " " + str(fishStart) + str(res))
-            f.write(str(fishStart) + "," + str(res[0]) + "," + str(res[-1]) + '\n')
-        except KeyboardInterrupt:
-            f.close()
-            break
-    f.close()
+    #     #f.write("fishStart, w, b\n")
+    #     try:
+    #         fish = Fish()
+    #         fishStart, res = runGame(board, dql, fish)
+    #         print("game: " + str(i) + " " + str(fishStart) + str(res))
+    #         f.write(str(fishStart) + "," + str(res[0]) + "," + str(res[-1]) + '\n')
+    #     except KeyboardInterrupt:
+    #         f.close()
+    #         break
+    # f.close()
 
 
         # Initialize game board and env
